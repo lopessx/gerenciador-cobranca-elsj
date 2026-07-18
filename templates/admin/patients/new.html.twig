@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Novo paciente{% endblock %}
+
+{% block body %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>Novo paciente</h1>
+        <a href="{{ path('admin_patients') }}" class="theme-toggle">Voltar</a>
+    </div>
+
+    <form method="post" class="auth-form">
+        <label>Nome<input type="text" name="name" required></label>
+        <label>E-mail<input type="email" name="email"></label>
+        <label>CPF<input type="text" name="cpf" maxlength="11" required></label>
+        <label>Empresa
+            <select name="company_id" required>
+                {% for company in companies %}
+                    <option value="{{ company.id }}">{{ company.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">Salvar</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Login{% endblock %}
+
+{% block body %}
+<div class="auth-card">
+    <h1>Acesso administrativo</h1>
+    <p>Entre para acessar o painel de cobranças.</p>
+
+    {% if error %}
+        <p class="flash-message">Credenciais inválidas.</p>
+    {% endif %}
+
+    <form action="{{ path('app_login') }}" method="post" class="auth-form">
+        <label>
+            E-mail
+            <input type="text" name="_username" value="{{ last_username }}" required>
+        </label>
+        <label>
+            Senha
+            <input type="password" name="_password" required>
+        </label>
+        <button type="submit">Entrar</button>
+    </form>
+</div>
+{% endblock %}

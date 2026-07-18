@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Empresas{% endblock %}
+
+{% block body %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>Empresas</h1>
+        <a href="{{ path('admin_companies_new') }}" class="theme-toggle">Nova empresa</a>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Razão social</th>
+                <th>E-mail</th>
+                <th>Entrada mínima</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for company in companies %}
+                <tr>
+                    <td>{{ company.name }}</td>
+                    <td>{{ company.razaoSocial }}</td>
+                    <td>{{ company.email }}</td>
+                    <td>R$ {{ (company.minEntryAmount / 100)|number_format(2, ',', '.') }}</td>
+                    <td>
+                        <a href="{{ path('admin_companies_edit', {id: company.id}) }}" class="table-link">Editar</a>
+                        <a href="{{ path('admin_companies_delete', {id: company.id}) }}" class="table-link danger">Excluir</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5">Nenhuma empresa cadastrada.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

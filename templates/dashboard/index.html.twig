@@ -1,0 +1,114 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestão de Cobranças{% endblock %}
+
+{% block body %}
+<div class="app-shell">
+    <aside class="sidebar">
+        <h1>Gestor de Cobranças</h1>
+        <p>Base MVC para controle de cobranças com parcelamento seguro em centavos.</p>
+        <ul>
+            <li>Empresa</li>
+            <li>Pacientes</li>
+            <li>Cobranças</li>
+            <li>Parcelas</li>
+        </ul>
+    </aside>
+
+    <main class="content">
+        <section class="hero-card">
+            <div>
+                <h2>Simulador de parcelamento</h2>
+                <p>Configure o valor total, a entrada e a quantidade de parcelas para gerar a divisão exata.</p>
+            </div>
+            <div class="quick-links">
+                <a href="{{ path('admin_companies') }}">Empresas</a>
+                <a href="{{ path('admin_patients') }}">Pacientes</a>
+            </div>
+            <form method="post" class="billing-form">
+                <label>
+                    Empresa
+                    <input type="text" name="company_name" placeholder="Nome da empresa" required>
+                </label>
+                <label>
+                    Paciente
+                    <input type="text" name="patient_name" placeholder="Nome do paciente" required>
+                </label>
+                <label>
+                    CPF
+                    <input type="text" name="patient_cpf" placeholder="12345678900" maxlength="11">
+                </label>
+                <label>
+                    Valor total (centavos)
+                    <input type="number" name="total_amount" min="0" step="1" placeholder="15000" required>
+                </label>
+                <label>
+                    Valor de entrada (centavos)
+                    <input type="number" name="entry_amount" min="0" step="1" placeholder="5000" required>
+                </label>
+                <label>
+                    Quantidade de parcelas
+                    <input type="number" name="installments_count" min="1" step="1" placeholder="3" required>
+                </label>
+                <button type="submit">Salvar cobrança</button>
+            </form>
+        </section>
+
+        {% if message %}
+            <section class="result-card">
+                <p class="flash-message">{{ message }}</p>
+            </section>
+        {% endif %}
+
+        {% if summary %}
+            <section class="result-card">
+                <h3>Resumo</h3>
+                <div class="summary-grid">
+                    <div>
+                        <span>Valor total</span>
+                        <strong>R$ {{ (summary.total_amount / 100)|number_format(2, ',', '.') }}</strong>
+                    </div>
+                    <div>
+                        <span>Entrada</span>
+                        <strong>R$ {{ (summary.entry_amount / 100)|number_format(2, ',', '.') }}</strong>
+                    </div>
+                    <div>
+                        <span>Valor a parcelar</span>
+                        <strong>R$ {{ (summary.amount_to_parcel / 100)|number_format(2, ',', '.') }}</strong>
+                    </div>
+                    <div>
+                        <span>Parcelas</span>
+                        <strong>{{ summary.installments_count }}</strong>
+                    </div>
+                </div>
+
+                <h3>Parcelas</h3>
+                <ul class="installments-list">
+                    {% for number, amount in summary.installments %}
+                        <li>
+                            <span>Parcela {{ number }}</span>
+                            <strong>R$ {{ (amount / 100)|number_format(2, ',', '.') }}</strong>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+
+        <section class="result-card">
+            <h3>Últimas cobranças</h3>
+            {% if billings is empty %}
+                <p>Nenhuma cobrança registrada ainda.</p>
+            {% else %}
+                <ul class="installments-list">
+                    {% for billing in billings %}
+                        <li>
+                            <span>{{ billing.patient.name }} • {{ billing.company.name }}</span>
+                            <strong>R$ {{ (billing.totalAmount / 100)|number_format(2, ',', '.') }}</strong>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
+    </main>
+</div>
+{% endblock %}

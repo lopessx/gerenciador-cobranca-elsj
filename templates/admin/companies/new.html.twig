@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nova empresa{% endblock %}
+
+{% block body %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>Nova empresa</h1>
+        <a href="{{ path('admin_companies') }}" class="theme-toggle">Voltar</a>
+    </div>
+
+    <form method="post" class="auth-form">
+        <label>Nome<input type="text" name="name" required></label>
+        <label>Razão social<input type="text" name="razao_social"></label>
+        <label>E-mail<input type="email" name="email"></label>
+        <label>Entrada mínima (centavos)<input type="number" name="min_entry_amount" min="0" step="1" value="0"></label>
+        <button type="submit">Salvar</button>
+    </form>
+</div>
+{% endblock %}
