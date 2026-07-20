@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nova cobrança{% endblock %}
+
+{% block body %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>Nova cobrança</h1>
+        <a href="{{ path('admin_billings') }}" class="theme-toggle">Voltar</a>
+    </div>
+
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            <p class="flash-message">{{ message }}</p>
+        {% endfor %}
+    {% endfor %}
+
+    <form method="post" class="auth-form">
+        <label>Paciente
+            <select name="patient_id" required>
+                <option value="">Selecione um paciente</option>
+                {% for patient in patients %}
+                    <option value="{{ patient.id }}">{{ patient.name }} - {{ patient.company.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Valor total (centavos)<input type="number" name="total_amount" min="0" step="1" placeholder="15000" required></label>
+        <label>Valor de entrada (centavos)<input type="number" name="entry_amount" min="0" step="1" placeholder="5000" required></label>
+        <label>Quantidade de parcelas<input type="number" name="installments_count" min="1" step="1" placeholder="3" required></label>
+        <button type="submit">Salvar</button>
+    </form>
+</div>
+{% endblock %}

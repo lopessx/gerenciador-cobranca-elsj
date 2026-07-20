@@ -2,90 +2,79 @@
 
 namespace App\Controller;
 
-use App\Entity\Billing;
-use App\Entity\Company;
-use App\Entity\Installment;
-use App\Entity\Patient;
 use App\Repository\BillingRepository;
-use App\Service\BillingDistributor;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+#[Route('/', name: 'dashboard')]
+#[IsGranted(['ROLE_ADMIN', 'ROLE_OPERATOR', 'ROLE_READER'])]
 class DashboardController extends AbstractController
 {
     public function __construct(
-        private readonly BillingDistributor $billingDistributor,
-        private readonly EntityManagerInterface $entityManager,
         private readonly BillingRepository $billingRepository,
+        private readonly EntityManagerInterface $entityManager,
     ) {
     }
 
-    #[Route('/', name: 'dashboard')]
-    public function index(Request $request): Response
+    public function index(): Response
     {
-        $installments = [];
-        $summary = null;
-        $message = null;
+        $user = $this->getUser();
 
-        if ($request->isMethod('POST')) {
-            $totalAmount = (int) $request->request->get('total_amount', 0);
-            $entryAmount = (int) $request->request->get('entry_amount', 0);
-            $installmentsCount = max(1, (int) $request->request->get('installments_count', 1));
-            $patientName = trim((string) $request->request->get('patient_name', ''));
-            $patientCpf = trim((string) $request->request->get('patient_cpf', ''));
-            $companyName = trim((string) $request->request->get('company_name', ''));
+        // Get billings - admin sees all, others see their company's
+        if ($user->isAdmin()) {
+            $billings = $this->billingRepository->findBy([], ['createdAt' => 'DESC'], 10);
+            $totalActive = $this->billingRepository->count(['status' => 'pending']);
+            $totalPaid = $this->billingRepository->count(['status' => 'paid']);
+            $totalOverdue = $this->billingRepository->count(['status' => 'overdue']);
+        } else {
+            // Operator/Reader: only see billings of their companies
+            $companies = $user->getCompanies();
+            $billings = [];
+            $totalActive = 0;
+            $totalPaid = 0;
+            $totalOverdue = 0;
+            
+            foreach ($companies as $company) {
+                $companyBillings = $this->billingRepository->findBy(['company' => $company], ['createdAt' => 'DESC'], 10);
+                $billings = array_merge($billings, $companyBillings);
+                
+                $totalActive += $this->billingRepository->count(['company' => $company, 'status' => 'pending']);
+                $totalPaid += $this->billingRepository->count(['company' => $company, 'status' => 'paid']);
+                $totalOverdue += $this->billingRepository->count(['company' => $company, 'status' => 'overdue']);
+            }
+            
+            // Sort by createdAt DESC and limit to 10
+            usort($billings, function($a, $b) {
+                return $b->getCreatedAt() <=> $a->getCreatedAt();
+            });
+            $billings = array_slice($billings, 0, 10);
+        }
 
-            $installments = $this->billingDistributor->distribute($totalAmount, $entryAmount, $installmentsCount);
+        // Get recent billings (last 5)
+        $recentBillings = array_slice($billings, 0, 5);
 
-            $summary = [
-                'total_amount' => $totalAmount,
-                'entry_amount' => $entryAmount,
-                'installments_count' => $installmentsCount,
-                'amount_to_parcel' => max(0, $totalAmount - $entryAmount),
-                'installments' => $installments,
-            ];
-
-            if ($patientName !== '' && $companyName !== '') {
-                $company = new Company();
-                $company->setName($companyName);
-                $company->setEmail(sprintf('%s@sistema.local', strtolower(str_replace(' ', '.', $companyName))));
-
-                $patient = new Patient();
-                $patient->setCompany($company);
-                $patient->setName($patientName);
-                $patient->setCpf($patientCpf !== '' ? $patientCpf : '00000000000');
-
-                $billing = new Billing();
-                $billing->setCompany($company);
-                $billing->setPatient($patient);
-                $billing->setTotalAmount($totalAmount);
-                $billing->setEntryAmount($entryAmount);
-
-                foreach ($installments as $number => $amount) {
-                    $installment = new Installment();
-                    $installment->setInstallmentNumber($number);
-                    $installment->setAmount($amount);
-                    $installment->setDueDate(new \DateTimeImmutable(sprintf('+%d months', $number - 1)));
-                    $billing->addInstallment($installment);
-                }
-
-                $this->entityManager->persist($company);
-                $this->entityManager->persist($patient);
-                $this->entityManager->persist($billing);
-                $this->entityManager->flush();
-
-                $message = 'Cobrança cadastrada com sucesso.';
+        // Calculate totals
+        $amountPending = 0;
+        $amountPaid = 0;
+        foreach ($billings as $b) {
+            if ($b->getStatus() === 'pending') {
+                $amountPending += $b->getTotalAmount();
+            } elseif ($b->getStatus() === 'paid') {
+                $amountPaid += $b->getTotalAmount();
             }
         }
 
         return $this->render('dashboard/index.html.twig', [
-            'installments' => $installments,
-            'summary' => $summary,
-            'message' => $message,
-            'billings' => $this->billingRepository->findBy([], ['createdAt' => 'DESC'], 5),
+            'totalActive' => $totalActive,
+            'totalPaid' => $totalPaid,
+            'totalOverdue' => $totalOverdue,
+            'amountPending' => $amountPending,
+            'amountPaid' => $amountPaid,
+            'recentBillings' => $recentBillings,
+            'billings' => $billings,
         ]);
     }
 }

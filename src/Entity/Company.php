@@ -19,16 +19,16 @@ class Company implements TenantInterface
     private string $name;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private ?string $razaoSocial = null;
+    private ?string $cnpj = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $email = null;
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $defaultPatientEmail = null;
+
     #[ORM\Column(type: 'boolean')]
     private bool $isActive = true;
-
-    #[ORM\Column(type: 'integer')]
-    private int $minEntryAmount = 0;
 
     #[ORM\OneToMany(mappedBy: 'company', targetEntity: Patient::class, cascade: ['persist', 'remove'])]
     private Collection $patients;
@@ -36,11 +36,15 @@ class Company implements TenantInterface
     #[ORM\OneToMany(mappedBy: 'company', targetEntity: Billing::class, cascade: ['persist', 'remove'])]
     private Collection $billings;
 
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'companies')]
+    private Collection $users;
+
     public function __construct()
     {
         $this->id = bin2hex(random_bytes(8));
         $this->patients = new ArrayCollection();
         $this->billings = new ArrayCollection();
+        $this->users = new ArrayCollection();
     }
 
     public function getId(): string
@@ -57,17 +61,17 @@ class Company implements TenantInterface
     {
         $this->name = $name;
 
-        return $this;    
+        return $this;
     }
 
-    public function getRazaoSocial(): ?string
+    public function getCnpj(): ?string
     {
-        return $this->razaoSocial;
+        return $this->cnpj;
     }
 
-    public function setRazaoSocial(?string $razaoSocial): self
+    public function setCnpj(?string $cnpj): self
     {
-        $this->razaoSocial = $razaoSocial;
+        $this->cnpj = $cnpj;
 
         return $this;
     }
@@ -84,6 +88,18 @@ class Company implements TenantInterface
         return $this;
     }
 
+    public function getDefaultPatientEmail(): ?string
+    {
+        return $this->defaultPatientEmail;
+    }
+
+    public function setDefaultPatientEmail(?string $defaultPatientEmail): self
+    {
+        $this->defaultPatientEmail = $defaultPatientEmail;
+
+        return $this;
+    }
+
     public function isActive(): bool
     {
         return $this->isActive;
@@ -92,18 +108,6 @@ class Company implements TenantInterface
     public function setIsActive(bool $isActive): self
     {
         $this->isActive = $isActive;
-
-        return $this;
-    }
-
-    public function getMinEntryAmount(): int
-    {
-        return $this->minEntryAmount;
-    }
-
-    public function setMinEntryAmount(int $minEntryAmount): self
-    {
-        $this->minEntryAmount = $minEntryAmount;
 
         return $this;
     }
@@ -133,6 +137,30 @@ class Company implements TenantInterface
         if (!$this->billings->contains($billing)) {
             $this->billings->add($billing);
             $billing->setCompany($this);
+        }
+
+        return $this;
+    }
+
+    public function getUsers(): Collection
+    {
+        return $this->users;
+    }
+
+    public function addUser(User $user): self
+    {
+        if (!$this->users->contains($user)) {
+            $this->users->add($user);
+            $user->addCompany($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUser(User $user): self
+    {
+        if ($this->users->removeElement($user)) {
+            $user->removeCompany($this);
         }
 
         return $this;

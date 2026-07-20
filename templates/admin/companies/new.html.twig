@@ -11,9 +11,9 @@
 
     <form method="post" class="auth-form">
         <label>Nome<input type="text" name="name" required></label>
-        <label>Razão social<input type="text" name="razao_social"></label>
+        <label>CNPJ<input type="text" name="cnpj" maxlength="18" placeholder="00.000.000/0000-00"></label>
         <label>E-mail<input type="email" name="email"></label>
-        <label>Entrada mínima (centavos)<input type="number" name="min_entry_amount" min="0" step="1" value="0"></label>
+        <label>E-mail padrão para pacientes sem e-mail<input type="email" name="default_patient_email" placeholder="ex: sememail@empresa.com"></label>
         <button type="submit">Salvar</button>
     </form>
 </div>

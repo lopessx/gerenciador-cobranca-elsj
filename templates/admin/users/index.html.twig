@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Usuários{% endblock %}
+
+{% block body %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>Usuários</h1>
+        <a href="{{ path('admin_users_new') }}" class="theme-toggle">Novo usuário</a>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Perfil</th>
+                <th>Status</th>
+                <th>Empresas</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.getRoleLabel() }}</td>
+                    <td>
+                        {% if user.isActive() %}
+                            <span class="status-active">Ativo</span>
+                        {% else %}
+                            <span class="status-inactive">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.getCompanies()|length }}</td>
+                    <td>
+                        <a href="{{ path('admin_users_edit', {id: user.id}) }}" class="table-link">Editar</a>
+                        <a href="{{ path('admin_users_delete', {id: user.id}) }}" class="table-link danger" onclick="return confirm('Excluir este usuário?')">Excluir</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6">Nenhum usuário cadastrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

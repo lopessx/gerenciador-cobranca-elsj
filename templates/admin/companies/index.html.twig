@@ -13,7 +13,7 @@
         <thead>
             <tr>
                 <th>Nome</th>
-                <th>Razão social</th>
+                <th>CNPJ</th>
                 <th>E-mail</th>
                 <th>Entrada mínima</th>
                 <th>Ações</th>
@@ -23,7 +23,7 @@
             {% for company in companies %}
                 <tr>
                     <td>{{ company.name }}</td>
-                    <td>{{ company.razaoSocial }}</td>
+                    <td>{{ company.cnpj }}</td>
                     <td>{{ company.email }}</td>
                     <td>R$ {{ (company.minEntryAmount / 100)|number_format(2, ',', '.') }}</td>
                     <td>

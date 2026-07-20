@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Cobranças{% endblock %}
+
+{% block body %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>Cobranças</h1>
+        <a href="{{ path('admin_billings_new') }}" class="theme-toggle">Nova cobrança</a>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Paciente</th>
+                <th>Empresa</th>
+                <th>Valor total</th>
+                <th>Entrada</th>
+                <th>Status</th>
+                <th>Parcelas</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for billing in billings %}
+                <tr>
+                    <td>{{ billing.patient.name }}</td>
+                    <td>{{ billing.company.name }}</td>
+                    <td>R$ {{ (billing.totalAmount / 100)|number_format(2, ',', '.') }}</td>
+                    <td>R$ {{ (billing.entryAmount / 100)|number_format(2, ',', '.') }}</td>
+                    <td>{{ billing.status }}</td>
+                    <td>{{ billing.installments|length }}</td>
+                    <td>
+                        <a href="{{ path('admin_billings_show', {id: billing.id}) }}" class="table-link">Ver</a>
+                        <a href="{{ path('admin_billings_delete', {id: billing.id}) }}" class="table-link danger" onclick="return confirm('Excluir esta cobrança?')">Excluir</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="7">Nenhuma cobrança cadastrada.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Detalhes da cobrança{% endblock %}
+
+{% block body %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>Detalhes da cobrança</h1>
+        <a href="{{ path('admin_billings') }}" class="theme-toggle">Voltar</a>
+    </div>
+
+    <div class="summary-grid">
+        <div>
+            <span>Paciente</span>
+            <strong>{{ billing.patient.name }}</strong>
+        </div>
+        <div>
+            <span>Empresa</span>
+            <strong>{{ billing.company.name }}</strong>
+        </div>
+        <div>
+            <span>Valor total</span>
+            <strong>R$ {{ (billing.totalAmount / 100)|number_format(2, ',', '.') }}</strong>
+        </div>
+        <div>
+            <span>Entrada</span>
+            <strong>R$ {{ (billing.entryAmount / 100)|number_format(2, ',', '.') }}</strong>
+        </div>
+        <div>
+            <span>Valor a parcelar</span>
+            <strong>R$ {{ ((billing.totalAmount - billing.entryAmount) / 100)|number_format(2, ',', '.') }}</strong>
+        </div>
+        <div>
+            <span>Status</span>
+            <strong>{{ billing.status }}</strong>
+        </div>
+        <div>
+            <span>Criado por</span>
+            <strong>{{ billing.createdBy.name }}</strong>
+        </div>
+        <div>
+            <span>Data de criação</span>
+            <strong>{{ billing.createdAt|date('d/m/Y H:i') }}</strong>
+        </div>
+    </div>
+
+    <h3>Parcelas</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Nº</th>
+                <th>Valor</th>
+                <th>Vencimento</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for installment in billing.installments %}
+                <tr>
+                    <td>{{ installment.installmentNumber }}</td>
+                    <td>R$ {{ (installment.amount / 100)|number_format(2, ',', '.') }}</td>
+                    <td>{{ installment.dueDate|date('d/m/Y') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if billing.pdfPath %}
+        <div class="mt-8">
+            <a href="{{ path('admin_billings_pdf', {id: billing.id}) }}" class="theme-toggle">Download PDF</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

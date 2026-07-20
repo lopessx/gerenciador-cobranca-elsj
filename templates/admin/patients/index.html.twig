@@ -15,6 +15,7 @@
                 <th>Nome</th>
                 <th>CPF</th>
                 <th>E-mail</th>
+                <th>Telefone</th>
                 <th>Empresa</th>
                 <th>Ações</th>
             </tr>
@@ -25,6 +26,7 @@
                     <td>{{ patient.name }}</td>
                     <td>{{ patient.cpf }}</td>
                     <td>{{ patient.email }}</td>
+                    <td>{{ patient.phone }}</td>
                     <td>{{ patient.company.name }}</td>
                     <td>
                         <a href="{{ path('admin_patients_edit', {id: patient.id}) }}" class="table-link">Editar</a>
@@ -32,7 +34,7 @@
                     </td>
                 </tr>
             {% else %}
-                <tr><td colspan="5">Nenhum paciente cadastrado.</td></tr>
+                <tr><td colspan="6">Nenhum paciente cadastrado.</td></tr>
             {% endfor %}
         </tbody>
     </table>

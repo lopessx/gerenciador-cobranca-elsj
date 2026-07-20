@@ -11,14 +11,22 @@
 
     <form method="post" class="auth-form">
         <label>Nome<input type="text" name="name" required></label>
-        <label>E-mail<input type="email" name="email"></label>
+        <label>E-mail<input type="email" name="email" required></label>
         <label>CPF<input type="text" name="cpf" maxlength="11" required></label>
+        <label>Telefone<input type="text" name="phone" maxlength="15" placeholder="+55 (81) 99999-9999"></label>
+        <label>Data de Nascimento
+            <input type="date" name="birthday" class="w-full">
+        </label>
         <label>Empresa
             <select name="company_id" required>
+                <option value="">Selecione uma empresa</option>
                 {% for company in companies %}
                     <option value="{{ company.id }}">{{ company.name }}</option>
                 {% endfor %}
             </select>
+        </label>
+        <label>Não tem e-mail?
+            <input type="checkbox" name="no_email" id="no_email_checkbox">
         </label>
         <button type="submit">Salvar</button>
     </form>

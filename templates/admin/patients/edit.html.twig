@@ -12,13 +12,21 @@
     <form method="post" class="auth-form">
         <label>Nome<input type="text" name="name" value="{{ patient.name }}" required></label>
         <label>E-mail<input type="email" name="email" value="{{ patient.email }}"></label>
-        <label>CPF<input type="text" name="cpf" maxlength="11" value="{{ patient.cpf }}" required></label>
+        <label>CPF<input type="text" name="cpf" value="{{ patient.cpf }}" maxlength="11" required></label>
+        <label>Telefone<input type="text" name="phone" value="{{ patient.phone }}" maxlength="15" placeholder="+55 (81) 99999-9999"></label>
+        <label>Data de Nascimento
+            <input type="date" name="birthday" value="{{ patient.birthday ? patient.birthday|date('Y-m-d') : '' }}" class="w-full">
+        </label>
         <label>Empresa
             <select name="company_id" required>
+                <option value="">Selecione uma empresa</option>
                 {% for company in companies %}
-                    <option value="{{ company.id }}" {% if patient.company and patient.company.id == company.id %}selected{% endif %}>{{ company.name }}</option>
+                    <option value="{{ company.id }}" {% if patient.company.id == company.id %}selected{% endif %}>{{ company.name }}</option>
                 {% endfor %}
             </select>
+        </label>
+        <label>Não tem e-mail?
+            <input type="checkbox" name="no_email" {% if patient.noEmail %}checked{% endif %}>
         </label>
         <button type="submit">Atualizar</button>
     </form>

@@ -1,114 +1,87 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Gestão de Cobranças{% endblock %}
+{% block title %}Dashboard | Cobri ELSJ{% endblock %}
 
 {% block body %}
-<div class="app-shell">
-    <aside class="sidebar">
-        <h1>Gestor de Cobranças</h1>
-        <p>Base MVC para controle de cobranças com parcelamento seguro em centavos.</p>
-        <ul>
-            <li>Empresa</li>
-            <li>Pacientes</li>
-            <li>Cobranças</li>
-            <li>Parcelas</li>
-        </ul>
-    </aside>
+<!-- Breadcrumbs & Header -->
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm mb-4">
+    <span>PAINEL</span>
+    <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+    <span class="text-primary">RESUMO EXECUTIVO</span>
+</div>
+<h2 class="font-display-lg text-display-lg mb-12">Dashboard</h2>
 
-    <main class="content">
-        <section class="hero-card">
-            <div>
-                <h2>Simulador de parcelamento</h2>
-                <p>Configure o valor total, a entrada e a quantidade de parcelas para gerar a divisão exata.</p>
-            </div>
-            <div class="quick-links">
-                <a href="{{ path('admin_companies') }}">Empresas</a>
-                <a href="{{ path('admin_patients') }}">Pacientes</a>
-            </div>
-            <form method="post" class="billing-form">
-                <label>
-                    Empresa
-                    <input type="text" name="company_name" placeholder="Nome da empresa" required>
-                </label>
-                <label>
-                    Paciente
-                    <input type="text" name="patient_name" placeholder="Nome do paciente" required>
-                </label>
-                <label>
-                    CPF
-                    <input type="text" name="patient_cpf" placeholder="12345678900" maxlength="11">
-                </label>
-                <label>
-                    Valor total (centavos)
-                    <input type="number" name="total_amount" min="0" step="1" placeholder="15000" required>
-                </label>
-                <label>
-                    Valor de entrada (centavos)
-                    <input type="number" name="entry_amount" min="0" step="1" placeholder="5000" required>
-                </label>
-                <label>
-                    Quantidade de parcelas
-                    <input type="number" name="installments_count" min="1" step="1" placeholder="3" required>
-                </label>
-                <button type="submit">Salvar cobrança</button>
-            </form>
-        </section>
+<!-- Stat Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-12">
+    <div class="bg-surface-container-low p-6 flex flex-col gap-1 group transition-all duration-300">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">FATURAS PAGAS</span>
+        <span class="font-display-lg text-[32px] text-primary">{{ totalPaid }}</span>
+        <div class="w-full h-1 bg-surface-container-highest mt-4 overflow-hidden">
+            <div class="h-full bg-primary w-2/3 group-hover:w-full transition-all duration-700"></div>
+        </div>
+    </div>
+    <div class="bg-surface-container-low p-6 flex flex-col gap-1 group transition-all duration-300">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">A RECEBER</span>
+        <span class="font-display-lg text-[32px] text-on-surface">{{ totalActive }}</span>
+        <div class="w-full h-1 bg-surface-container-highest mt-4 overflow-hidden">
+            <div class="h-full bg-secondary w-[94.2%] group-hover:opacity-80 transition-all duration-700"></div>
+        </div>
+    </div>
+    <div class="bg-surface-container-low p-6 flex flex-col gap-1 group transition-all duration-300">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">ATRASADAS</span>
+        <span class="font-display-lg text-[32px] text-error">{{ totalOverdue }}</span>
+        <div class="w-full h-1 bg-surface-container-highest mt-4 overflow-hidden">
+            <div class="h-full bg-error w-[3%]"></div>
+        </div>
+    </div>
+    <div class="bg-surface-container-low p-6 flex flex-col gap-1 group transition-all duration-300">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">VALOR A RECEBER</span>
+        <span class="font-display-lg text-[32px] text-on-surface">R$ {{ (amountPending / 100)|number_format(2, ',', '.') }}</span>
+        <div class="w-full h-1 bg-surface-container-highest mt-4 overflow-hidden">
+            <div class="h-full bg-primary-fixed-dim w-1/2"></div>
+        </div>
+    </div>
+</div>
 
-        {% if message %}
-            <section class="result-card">
-                <p class="flash-message">{{ message }}</p>
-            </section>
-        {% endif %}
+<!-- Recent Billings -->
+<section class="mb-section-gap">
+    <div class="flex justify-between items-end mb-12">
+        <div>
+            <h3 class="font-headline-lg text-headline-lg text-on-surface">Faturas Recentes</h3>
+            <p class="font-body-md text-on-surface-variant/60 mt-1">Últimas cobranças registradas no sistema.</p>
+        </div>
+        <a class="font-label-md text-primary hover:underline underline-offset-8" href="{{ path('admin_billings') }}">VER TODAS AS FATURAS</a>
+    </div>
 
-        {% if summary %}
-            <section class="result-card">
-                <h3>Resumo</h3>
-                <div class="summary-grid">
+    <div class="space-y-[80px]">
+        {% for billing in recentBillings %}
+        <div class="flex flex-col md:flex-row md:items-center justify-between group">
+            <div class="flex-1 bg-surface-container-low border-l-4 border-primary p-8 relative overflow-hidden transition-all duration-300 hover:bg-surface-container-high">
+                <div class="flex flex-wrap items-start justify-between gap-6">
                     <div>
-                        <span>Valor total</span>
-                        <strong>R$ {{ (summary.total_amount / 100)|number_format(2, ',', '.') }}</strong>
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="bg-surface-container-high px-3 py-1 text-label-sm text-primary uppercase ghost-border">{{ billing.status }}</span>
+                            <span class="font-label-sm text-on-surface-variant opacity-60">FAT-{{ billing.id|slice(0, 8)|upper }}</span>
+                        </div>
+                        <h3 class="font-headline-lg text-on-surface mb-1">{{ billing.patient.name }}</h3>
+                        <p class="font-body-md text-on-surface-variant">{{ billing.company.name }}</p>
                     </div>
-                    <div>
-                        <span>Entrada</span>
-                        <strong>R$ {{ (summary.entry_amount / 100)|number_format(2, ',', '.') }}</strong>
-                    </div>
-                    <div>
-                        <span>Valor a parcelar</span>
-                        <strong>R$ {{ (summary.amount_to_parcel / 100)|number_format(2, ',', '.') }}</strong>
-                    </div>
-                    <div>
-                        <span>Parcelas</span>
-                        <strong>{{ summary.installments_count }}</strong>
+                    <div class="text-right">
+                        <div class="font-label-sm text-on-surface-variant uppercase tracking-widest mb-1">Valor Devido</div>
+                        <div class="font-headline-lg text-primary">R$ {{ (billing.totalAmount / 100)|number_format(2, ',', '.') }}</div>
+                        <div class="font-label-sm text-on-surface-variant mt-2">Emitido em: {{ billing.createdAt|date('d M, Y') }}</div>
                     </div>
                 </div>
-
-                <h3>Parcelas</h3>
-                <ul class="installments-list">
-                    {% for number, amount in summary.installments %}
-                        <li>
-                            <span>Parcela {{ number }}</span>
-                            <strong>R$ {{ (amount / 100)|number_format(2, ',', '.') }}</strong>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </section>
-        {% endif %}
-
-        <section class="result-card">
-            <h3>Últimas cobranças</h3>
-            {% if billings is empty %}
-                <p>Nenhuma cobrança registrada ainda.</p>
-            {% else %}
-                <ul class="installments-list">
-                    {% for billing in billings %}
-                        <li>
-                            <span>{{ billing.patient.name }} • {{ billing.company.name }}</span>
-                            <strong>R$ {{ (billing.totalAmount / 100)|number_format(2, ',', '.') }}</strong>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </section>
-    </main>
-</div>
+                <div class="absolute right-4 bottom-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <a href="{{ path('admin_billings_show', {id: billing.id}) }}" class="material-symbols-outlined text-primary text-3xl" data-icon="arrow_forward">arrow_forward</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-surface-container-low p-8 text-center">
+            <p class="font-body-md text-on-surface-variant">Nenhuma fatura registrada ainda.</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
 {% endblock %}

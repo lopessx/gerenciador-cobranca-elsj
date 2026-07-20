@@ -1,35 +1,112 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}Gestor de Cobranças{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>💳</text></svg>">
-        <script>
-            const storedTheme = localStorage.getItem('theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
-                document.documentElement.classList.add('theme-dark');
-            }
-        </script>
-        {% block stylesheets %}{% endblock %}
-
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-        {% endblock %}
-    </head>
-    <body>
-        <header class="topbar">
-            <div class="brand">Sistema de Cobranças</div>
-            <div class="topbar-actions">
-                {% if app.user %}
-                    <a href="{{ path('app_logout') }}" class="theme-toggle">Sair</a>
-                {% else %}
-                    <a href="{{ path('app_login') }}" class="theme-toggle">Entrar</a>
-                {% endif %}
-                <button type="button" class="theme-toggle" data-theme-toggle>Alternar tema</button>
-            </div>
-        </header>
-        {% block body %}{% endblock %}
-    </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gestor de Cobranças{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>💳</text></svg>">
+    <script>
+        const storedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+            document.documentElement.classList.add('theme-dark');
+        }
+    </script>
+    {% block stylesheets %}{% endblock %}
+    {% block javascripts %}
+        {% block importmap %}{{ importmap('app') }}{% endblock %}
+    {% endblock %}
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary-container selection:text-on-primary-container min-h-screen flex">
+<!-- Background Blueprint Effect -->
+<div class="fixed inset-0 blueprint-grid pointer-events-none"></div>
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col h-screen sticky top-0 w-64 bg-surface-container-lowest dark:bg-surface-container-lowest flex flex-col border-r border-outline-variant/15 transition-all duration-200 ease-in-out">
+<div class="p-8 flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">dentistry</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm text-primary leading-tight">Admin Console</h1>
+<p class="text-[10px] text-on-surface-variant tracking-[0.2em] uppercase">Alternar Unidade</p>
+</div>
+</div>
+</div>
+<nav class="mt-8 flex-1"><div class="flex items-center gap-4 text-on-surface-variant px-8 py-4 hover:bg-surface-container-low hover:text-primary transition-all duration-200 cursor-pointer">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant px-8 py-4 hover:bg-surface-container-low hover:text-primary transition-all duration-200 cursor-pointer">
+<span class="material-symbols-outlined">domain</span>
+<span class="font-label-md text-label-md">Empresas</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant px-8 py-4 hover:bg-surface-container-low hover:text-primary transition-all duration-200 cursor-pointer">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-md text-label-md">Pacientes</span>
+</div>
+<div class="flex items-center gap-4 text-primary bg-surface-container-highest border-l-4 border-primary px-8 py-4 transition-all duration-200 cursor-pointer">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-label-md text-label-md">Faturas</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant px-8 py-4 hover:bg-surface-container-low hover:text-primary transition-all duration-200 cursor-pointer">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Usuários</span>
+</div></nav>
+<div class="p-8 mt-auto border-t border-outline-variant/10">
+<div class="flex items-center gap-4 text-on-surface-variant px-0 py-2 hover:text-secondary transition-opacity hover:opacity-70 cursor-pointer">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-sm text-label-sm">Suporte</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant px-0 py-2 hover:text-secondary transition-opacity hover:opacity-70 cursor-pointer">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-sm text-label-sm">Logs de Auditoria</span>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface dark:bg-surface">
+<!-- TopNavBar -->
+<header class="w-full top-0 sticky z-30 bg-surface dark:bg-surface flex justify-between items-center px-margin-desktop py-6">
+<div class="flex flex-col">
+<h1 class="font-display-lg text-[24px] text-primary tracking-tighter uppercase font-extrabold">Cobri ELSJ</h1>
+<p class="text-[10px] text-outline tracking-[0.3em] font-label-sm">SISTEMAS DE FATURAMENTO ODONTOLÓGICO</p>
+</div>
+<div class="hidden md:flex items-center gap-10">
+<a class="text-on-surface-variant font-label-md hover:text-primary-fixed transition-colors duration-300" href="{{ path('dashboard') }}">Dashboard</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md" href="{{ path('admin_billings') }}">Cobranças</a>
+<a class="text-on-surface-variant font-label-md hover:text-primary-fixed transition-colors duration-300" href="{{ path('admin_patients') }}">Pacientes</a>
+<a class="text-on-surface-variant font-label-md hover:text-primary-fixed transition-colors duration-300" href="{{ path('admin_companies') }}">Configurações</a>
+</div>
+<div class="flex items-center gap-6">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">account_balance</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-high border border-outline-variant/15 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-lg">account_circle</span>
+</div>
+</div>
+</header>
+<div class="flex-1 px-margin-desktop py-12 flex flex-col max-w-[1400px]">
+{% block body %}{% endblock %}
+</div>
+<!-- Footer -->
+<footer class="w-full py-12 mt-section-gap flex flex-col md:flex-row justify-between items-center px-margin-desktop gap-gutter bg-surface-container-low border-t border-outline-variant/10">
+<div class="flex flex-col gap-1">
+<p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 Cobri ELSJ. Sistemas de Faturamento de Precisão.</p>
+<p class="text-[9px] text-outline uppercase tracking-widest">Versão Institucional 4.2.19_b</p>
+</div>
+<div class="flex gap-10">
+<a class="text-on-surface-variant font-label-sm hover:text-secondary transition-opacity hover:opacity-70" href="#">Documentação</a>
+<a class="text-on-surface-variant font-label-sm hover:text-secondary transition-opacity hover:opacity-70" href="#">Referência da API</a>
+<a class="text-on-surface-variant font-label-sm hover:text-secondary transition-opacity hover:opacity-70" href="#">Termos de Serviço</a>
+</div>
+</footer>
+</main>
+<!-- FAB for mobile mainly but here as a quick action -->
+<nav class="md:hidden fixed bottom-6 right-6 w-14 h-14 rounded-full gold-gradient text-on-primary flex items-center justify-center shadow-xl active:scale-95 transition-transform">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</nav>
+</div>
+</body>
 </html>

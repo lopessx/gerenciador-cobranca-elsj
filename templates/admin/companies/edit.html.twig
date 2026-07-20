@@ -11,9 +11,9 @@
 
     <form method="post" class="auth-form">
         <label>Nome<input type="text" name="name" value="{{ company.name }}" required></label>
-        <label>Razão social<input type="text" name="razao_social" value="{{ company.razaoSocial }}"></label>
+        <label>CNPJ<input type="text" name="cnpj" value="{{ company.cnpj }}" maxlength="18" placeholder="00.000.000/0000-00"></label>
         <label>E-mail<input type="email" name="email" value="{{ company.email }}"></label>
-        <label>Entrada mínima (centavos)<input type="number" name="min_entry_amount" min="0" step="1" value="{{ company.minEntryAmount }}"></label>
+        <label>E-mail padrão para pacientes sem e-mail<input type="email" name="default_patient_email" value="{{ company.defaultPatientEmail }}" placeholder="ex: sememail@empresa.com"></label>
         <button type="submit">Atualizar</button>
     </form>
 </div>

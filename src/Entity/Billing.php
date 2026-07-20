@@ -23,6 +23,10 @@ class Billing implements TenantInterface
     #[ORM\JoinColumn(nullable: false)]
     private Patient $patient;
 
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(nullable: false)]
+    private User $createdBy;
+
     #[ORM\Column(type: 'integer')]
     private int $totalAmount;
 
@@ -31,6 +35,9 @@ class Billing implements TenantInterface
 
     #[ORM\Column(type: 'string', length: 20)]
     private string $status = 'pending';
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $pdfPath = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
@@ -74,6 +81,18 @@ class Billing implements TenantInterface
         return $this;
     }
 
+    public function getCreatedBy(): User
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(User $createdBy): self
+    {
+        $this->createdBy = $createdBy;
+
+        return $this;
+    }
+
     public function getTotalAmount(): int
     {
         return $this->totalAmount;
@@ -106,6 +125,18 @@ class Billing implements TenantInterface
     public function setStatus(string $status): self
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    public function getPdfPath(): ?string
+    {
+        return $this->pdfPath;
+    }
+
+    public function setPdfPath(?string $pdfPath): self
+    {
+        $this->pdfPath = $pdfPath;
 
         return $this;
     }
