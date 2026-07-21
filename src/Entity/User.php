@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Entity\Enum\UserRole;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -36,8 +37,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'string', length: 255)]
     private string $password;
 
-    #[ORM\Column(type: 'json')]
-    private array $roles = [self::ROLE_OPERATOR];
+    #[ORM\Column(type: 'string', length: 20, enumType: UserRole::class)]
+    private UserRole $role = UserRole::Operator;
 
     #[ORM\Column(type: 'boolean')]
     private bool $isActive = true;
@@ -100,39 +101,49 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        $roles[] = 'ROLE_USER';
-
-        return array_unique($roles);
+        return [$this->role->value, 'ROLE_USER'];
     }
 
+    public function getRole(): UserRole
+    {
+        return $this->role;
+    }
+
+    public function setRole(UserRole|string $role): self
+    {
+        $this->role = $role instanceof UserRole ? $role : UserRole::from($role);
+
+        return $this;
+    }
+
+    /**
+     * @deprecated Use setRole() instead. Kept for backward compatibility.
+     */
     public function setRoles(array $roles): self
     {
-        $this->roles = $roles;
+        $this->role = UserRole::from($roles[0] ?? UserRole::Operator->value);
 
         return $this;
     }
 
     public function getRoleLabel(): string
     {
-        $role = $this->roles[0] ?? self::ROLE_OPERATOR;
-
-        return self::ROLES_LABELS[$role] ?? 'Operador';
+        return $this->role->label();
     }
 
     public function isAdmin(): bool
     {
-        return in_array(self::ROLE_ADMIN, $this->roles, true);
+        return $this->role === UserRole::Admin;
     }
 
     public function isOperator(): bool
     {
-        return in_array(self::ROLE_OPERATOR, $this->roles, true);
+        return $this->role === UserRole::Operator;
     }
 
     public function isReader(): bool
     {
-        return in_array(self::ROLE_READER, $this->roles, true);
+        return $this->role === UserRole::Reader;
     }
 
     public function isActive(): bool

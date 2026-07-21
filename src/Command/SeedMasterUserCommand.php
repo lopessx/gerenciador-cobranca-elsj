@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Entity\Enum\UserRole;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -51,7 +52,7 @@ class SeedMasterUserCommand extends Command
         $user->setEmail($email);
         $user->setName('Administrador Master');
         $user->setPassword($hasher->hash($password));
-        $user->setRoles(['ROLE_ADMIN']);
+        $user->setRole(UserRole::Admin);
         $user->setMustChangePwd(false);
 
         $this->entityManager->persist($user);

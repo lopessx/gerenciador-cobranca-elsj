@@ -3,71 +3,95 @@
 {% block title %}Detalhes da cobrança{% endblock %}
 
 {% block body %}
-<div class="admin-page">
-    <div class="admin-header">
-        <h1>Detalhes da cobrança</h1>
-        <a href="{{ path('admin_billings') }}" class="theme-toggle">Voltar</a>
-    </div>
-
-    <div class="summary-grid">
-        <div>
-            <span>Paciente</span>
-            <strong>{{ billing.patient.name }}</strong>
-        </div>
-        <div>
-            <span>Empresa</span>
-            <strong>{{ billing.company.name }}</strong>
-        </div>
-        <div>
-            <span>Valor total</span>
-            <strong>R$ {{ (billing.totalAmount / 100)|number_format(2, ',', '.') }}</strong>
-        </div>
-        <div>
-            <span>Entrada</span>
-            <strong>R$ {{ (billing.entryAmount / 100)|number_format(2, ',', '.') }}</strong>
-        </div>
-        <div>
-            <span>Valor a parcelar</span>
-            <strong>R$ {{ ((billing.totalAmount - billing.entryAmount) / 100)|number_format(2, ',', '.') }}</strong>
-        </div>
-        <div>
-            <span>Status</span>
-            <strong>{{ billing.status }}</strong>
-        </div>
-        <div>
-            <span>Criado por</span>
-            <strong>{{ billing.createdBy.name }}</strong>
-        </div>
-        <div>
-            <span>Data de criação</span>
-            <strong>{{ billing.createdAt|date('d/m/Y H:i') }}</strong>
-        </div>
-    </div>
-
-    <h3>Parcelas</h3>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Nº</th>
-                <th>Valor</th>
-                <th>Vencimento</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for installment in billing.installments %}
-                <tr>
-                    <td>{{ installment.installmentNumber }}</td>
-                    <td>R$ {{ (installment.amount / 100)|number_format(2, ',', '.') }}</td>
-                    <td>{{ installment.dueDate|date('d/m/Y') }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    {% if billing.pdfPath %}
-        <div class="mt-8">
-            <a href="{{ path('admin_billings_pdf', {id: billing.id}) }}" class="theme-toggle">Download PDF</a>
-        </div>
-    {% endif %}
+<!-- Breadcrumbs & Header -->
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm mb-4">
+    <span>COBRANÇAS</span>
+    <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+    <span class="text-primary">DETALHES DO REGISTRO</span>
 </div>
+
+<div class="flex justify-between items-end mb-12">
+    <div>
+        <h2 class="font-display-lg text-display-lg-mobile md:text-display-lg mb-2">Detalhes da Cobrança</h2>
+        <p class="font-body-md text-on-surface-variant/60">FAT-{{ billing.id|slice(0, 8)|upper }}</p>
+    </div>
+    <a href="{{ path('admin_billings') }}" class="font-label-md text-primary hover:underline underline-offset-8 flex items-center gap-2">
+        <span class="material-symbols-outlined text-lg">arrow_back</span>
+        VOLTAR
+    </a>
+</div>
+
+<!-- Summary Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-section-gap">
+    <div class="bg-surface-container-low p-6 border-l-4 border-primary">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">Paciente</span>
+        <p class="font-headline-sm text-headline-sm text-on-surface mt-2">{{ billing.patient.name }}</p>
+    </div>
+    <div class="bg-surface-container-low p-6 border-l-4 border-primary">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">Empresa</span>
+        <p class="font-headline-sm text-headline-sm text-on-surface mt-2">{{ billing.company.name }}</p>
+    </div>
+    <div class="bg-surface-container-low p-6 border-l-4 border-primary">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">Valor Total</span>
+        <p class="font-headline-sm text-headline-sm text-primary mt-2">R$ {{ (billing.totalAmount / 100)|number_format(2, ',', '.') }}</p>
+    </div>
+    <div class="bg-surface-container-low p-6 border-l-4 border-primary">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">Status</span>
+        <p class="font-label-md text-label-md text-primary mt-2 uppercase tracking-widest">{{ billing.status }}</p>
+    </div>
+    <div class="bg-surface-container-low p-6 border-l-4 border-secondary">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">Entrada</span>
+        <p class="font-headline-sm text-headline-sm text-on-surface mt-2">R$ {{ (billing.entryAmount / 100)|number_format(2, ',', '.') }}</p>
+    </div>
+    <div class="bg-surface-container-low p-6 border-l-4 border-secondary">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">Valor a Parcelar</span>
+        <p class="font-headline-sm text-headline-sm text-on-surface mt-2">R$ {{ ((billing.totalAmount - billing.entryAmount) / 100)|number_format(2, ',', '.') }}</p>
+    </div>
+    <div class="bg-surface-container-low p-6">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">Criado por</span>
+        <p class="font-label-md text-label-md text-on-surface mt-2">{{ billing.createdBy.name }}</p>
+    </div>
+    <div class="bg-surface-container-low p-6">
+        <span class="font-label-sm text-label-sm text-on-surface-variant/60 uppercase tracking-widest">Data de Criação</span>
+        <p class="font-label-md text-label-md text-on-surface mt-2">{{ billing.createdAt|date('d/m/Y H:i') }}</p>
+    </div>
+</div>
+
+<!-- Parcelas Section -->
+<section class="mb-section-gap">
+    <div class="flex justify-between items-end mb-12">
+        <div>
+            <h3 class="font-headline-lg text-headline-lg text-on-surface">Parcelas</h3>
+            <p class="font-body-md text-on-surface-variant/60 mt-1">Ciclo de pagamento distribuído.</p>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        {% for installment in billing.installments %}
+        <div class="flex items-center justify-between py-4 border-b border-outline-variant/10 group hover:bg-surface-container-high px-4 transition-colors">
+            <div class="flex items-center gap-6">
+                <span class="text-outline font-label-sm font-mono">{{ '%02d'|format(installment.installmentNumber) }}/{{ '%02d'|format(billing.installments|length) }}</span>
+                <div class="flex flex-col">
+                    <span class="text-on-surface font-label-md">{{ installment.dueDate|date('d M Y')|upper }}</span>
+                    <span class="text-[10px] text-outline font-label-sm">{% if loop.first %}INÍCIO DO LIVRO{% elseif loop.last %}ACERTO FINAL{% else %}RECORRENTE{% endif %}</span>
+                </div>
+            </div>
+            <span class="text-primary font-bold font-headline-sm">R$ {{ (installment.amount / 100)|number_format(2, ',', '.') }}</span>
+        </div>
+        {% else %}
+        <div class="bg-surface-container-low p-8 text-center">
+            <p class="font-body-md text-on-surface-variant">Nenhuma parcela registrada.</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% if billing.pdfPath %}
+<div class="flex gap-4">
+    <a href="{{ path('admin_billings_pdf', {id: billing.id}) }}" class="gold-gradient-btn px-8 py-4 text-on-primary font-label-md text-label-md rounded flex items-center gap-3" style="text-decoration: none;">
+        <span class="material-symbols-outlined">download</span>
+        <span>Download PDF</span>
+    </a>
+</div>
+{% endif %}
 {% endblock %}

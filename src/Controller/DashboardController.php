@@ -9,8 +9,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/', name: 'dashboard')]
-#[IsGranted(['ROLE_ADMIN', 'ROLE_OPERATOR', 'ROLE_READER'])]
+#[Route('')]
+#[IsGranted('ROLE_ADMIN or ROLE_OPERATOR or ROLE_READER')]
 class DashboardController extends AbstractController
 {
     public function __construct(
@@ -19,6 +19,7 @@ class DashboardController extends AbstractController
     ) {
     }
 
+    #[Route('', name: 'dashboard')]
     public function index(): Response
     {
         $user = $this->getUser();

@@ -19,7 +19,7 @@ class PatientController extends AbstractController
     }
 
     #[Route('', name: 'admin_patients')]
-    #[IsGranted(['ROLE_ADMIN', 'ROLE_OPERATOR'])]
+    #[IsGranted('ROLE_ADMIN or ROLE_OPERATOR')]
     public function index(): Response
     {
         $user = $this->getUser();
@@ -44,7 +44,7 @@ class PatientController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_patients_new')]
-    #[IsGranted(['ROLE_ADMIN', 'ROLE_OPERATOR'])]
+    #[IsGranted('ROLE_ADMIN or ROLE_OPERATOR')]
     public function new(Request $request): Response
     {
         $user = $this->getUser();
@@ -96,7 +96,7 @@ class PatientController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'admin_patients_edit')]
-    #[IsGranted(['ROLE_ADMIN', 'ROLE_OPERATOR'])]
+    #[IsGranted('ROLE_ADMIN or ROLE_OPERATOR')]
     public function edit(Patient $patient, Request $request): Response
     {
         $user = $this->getUser();
@@ -154,7 +154,7 @@ class PatientController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'admin_patients_delete')]
-    #[IsGranted(['ROLE_ADMIN', 'ROLE_OPERATOR'])]
+    #[IsGranted('ROLE_ADMIN or ROLE_OPERATOR')]
     public function delete(Patient $patient): Response
     {
         $user = $this->getUser();

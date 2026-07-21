@@ -41,7 +41,7 @@ class UserController extends AbstractController
             $user = new User();
             $user->setName((string) $request->request->get('name'));
             $user->setEmail((string) $request->request->get('email'));
-            $user->setRoles([(string) $request->request->get('role', User::ROLE_OPERATOR)]);
+            $user->setRole((string) $request->request->get('role', User::ROLE_OPERATOR));
             $user->setMustChangePwd(true);
 
             $password = $request->request->get('password');
@@ -80,7 +80,7 @@ class UserController extends AbstractController
         if ($request->isMethod('POST')) {
             $user->setName((string) $request->request->get('name'));
             $user->setEmail((string) $request->request->get('email'));
-            $user->setRoles([(string) $request->request->get('role', User::ROLE_OPERATOR)]);
+            $user->setRole((string) $request->request->get('role', User::ROLE_OPERATOR));
 
             $password = $request->request->get('password');
             if ($password) {

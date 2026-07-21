@@ -25,7 +25,7 @@ class BillingController extends AbstractController
     }
 
     #[Route('', name: 'admin_billings')]
-    #[IsGranted(['ROLE_ADMIN', 'ROLE_OPERATOR'])]
+    #[IsGranted('ROLE_ADMIN or ROLE_OPERATOR')]
     public function index(): Response
     {
         $user = $this->getUser();
@@ -47,7 +47,7 @@ class BillingController extends AbstractController
     }
 
     #[Route('/new', name: 'admin_billings_new')]
-    #[IsGranted(['ROLE_ADMIN', 'ROLE_OPERATOR'])]
+    #[IsGranted('ROLE_ADMIN or ROLE_OPERATOR')]
     public function new(Request $request): Response
     {
         $user = $this->getUser();
@@ -119,7 +119,7 @@ class BillingController extends AbstractController
     }
 
     #[Route('/{id}', name: 'admin_billings_show')]
-    #[IsGranted(['ROLE_ADMIN', 'ROLE_OPERATOR'])]
+    #[IsGranted('ROLE_ADMIN or ROLE_OPERATOR')]
     public function show(Billing $billing): Response
     {
         $user = $this->getUser();
@@ -136,7 +136,7 @@ class BillingController extends AbstractController
     }
 
     #[Route('/{id}/pdf', name: 'admin_billings_pdf')]
-    #[IsGranted(['ROLE_ADMIN', 'ROLE_OPERATOR'])]
+    #[IsGranted('ROLE_ADMIN or ROLE_OPERATOR')]
     public function pdf(Billing $billing): Response
     {
         $user = $this->getUser();
