@@ -6,8 +6,7 @@
 
         <q-toolbar-title> Cobri - Gerenciador de Pagamentos </q-toolbar-title>
 
-        <div v-if="authStore.user" class="row items-center q-gutter-sm">
-          <span class="text-caption">{{ authStore.user.name }}</span>
+        <div class="row items-center q-gutter-sm">
           <q-btn flat round icon="logout" @click="logout">
             <q-tooltip>Sair</q-tooltip>
           </q-btn>
@@ -56,12 +55,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
-
-const router = useRouter();
-const authStore = useAuthStore();
+import api from '@/services/api';
 
 const leftDrawerOpen = ref(false);
 
@@ -69,14 +65,14 @@ function toggleLeftDrawer() {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 }
 
-function logout() {
-  authStore.logout();
-  router.push('/login');
-}
-
-onMounted(() => {
-  if (authStore.token) {
-    void authStore.fetchUser();
+async function logout() {
+  try {
+    await api.post('/logout');
+  } catch {
+    // Ignora erro no logout; redireciona mesmo assim
   }
-});
+
+  const router = useRouter();
+  void router.push('/login');
+}
 </script>

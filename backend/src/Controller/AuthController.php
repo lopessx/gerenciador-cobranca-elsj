@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Enum\Role;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -57,5 +58,16 @@ class AuthController extends AbstractController
         }
 
         return $this->json($user->toArray());
+    }
+
+    #[Route('/logout', name: 'api_logout', methods: ['POST'])]
+    public function logout(): JsonResponse
+    {
+        $response = $this->json(['message' => 'Logged out']);
+
+        // Limpa o cookie JWT definindo expiração no passado
+        $response->headers->clearCookie('jwt', '/', null, true, true);
+
+        return $response;
     }
 }

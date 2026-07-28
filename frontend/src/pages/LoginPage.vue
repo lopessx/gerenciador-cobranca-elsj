@@ -15,7 +15,10 @@
                 label="Email"
                 type="email"
                 outlined
-                :rules="[(val) => !!val || 'Email é obrigatório', (val) => /.+@.+/.test(val) || 'Email inválido']"
+                :rules="[
+                  (val) => !!val || 'Email é obrigatório',
+                  (val) => /.+@.+/.test(val) || 'Email inválido',
+                ]"
               >
                 <template v-slot:prepend>
                   <q-icon name="email" />
@@ -60,12 +63,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+
 import { useQuasar } from 'quasar';
-import { useAuthStore } from '@/stores/auth';
+import api from '@/services/api';
+
+const $q = useQuasar();
 
 const router = useRouter();
-const $q = useQuasar();
-const authStore = useAuthStore();
 
 const form = ref({
   email: '',
@@ -78,9 +82,13 @@ const loading = ref(false);
 async function onSubmit() {
   loading.value = true;
   try {
-    await authStore.login(form.value.email, form.value.password);
+    await api.post('/login', {
+      email: form.value.email,
+      password: form.value.password,
+    });
     $q.notify({ type: 'positive', message: 'Login realizado com sucesso!' });
-    await router.push('/');
+
+    await router.push({path: '/'});
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };
     $q.notify({

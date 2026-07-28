@@ -5,20 +5,20 @@
       <q-btn color="primary" icon="add" label="Novo" @click="openDialog()" />
     </div>
 
-    <q-table
-      :rows="orders"
-      :columns="columns"
-      row-key="order_id"
-      :loading="loading"
-      flat
-      bordered
-    >
+    <q-table :rows="orders" :columns="columns" row-key="order_id" :loading="loading" flat bordered>
       <template v-slot:body-cell-actions="props">
         <q-td :props="props" class="q-gutter-sm">
           <q-btn flat round color="primary" icon="edit" size="sm" @click="openDialog(props.row)">
             <q-tooltip>Editar</q-tooltip>
           </q-btn>
-          <q-btn flat round color="negative" icon="delete" size="sm" @click="confirmDelete(props.row)">
+          <q-btn
+            flat
+            round
+            color="negative"
+            icon="delete"
+            size="sm"
+            @click="confirmDelete(props.row)"
+          >
             <q-tooltip>Excluir</q-tooltip>
           </q-btn>
         </q-td>
@@ -41,14 +41,14 @@
               type="number"
               step="0.01"
               outlined
-              :rules="[val => !!val || 'Valor é obrigatório']"
+              :rules="[(val) => !!val || 'Valor é obrigatório']"
             />
             <q-input
               v-model.number="form.installments"
               label="Parcelas"
               type="number"
               outlined
-              :rules="[val => val > 0 || 'Parcelas deve ser maior que 0']"
+              :rules="[(val) => val > 0 || 'Parcelas deve ser maior que 0']"
             />
             <q-select
               v-model="form.payment_method_id"
@@ -59,7 +59,7 @@
               outlined
               emit-value
               map-options
-              :rules="[val => !!val || 'Método de pagamento é obrigatório']"
+              :rules="[(val) => !!val || 'Método de pagamento é obrigatório']"
             />
             <q-select
               v-model="form.user_id"
@@ -70,7 +70,7 @@
               outlined
               emit-value
               map-options
-              :rules="[val => !!val || 'Usuário é obrigatório']"
+              :rules="[(val) => !!val || 'Usuário é obrigatório']"
             />
 
             <q-card-actions align="right" class="q-px-none">
@@ -110,11 +110,23 @@ const form = ref({
   user_id: 0,
 });
 
-const columns: { name: string; label: string; field: string; sortable?: boolean; align: 'left' | 'right' | 'center' }[] = [
+const columns: {
+  name: string;
+  label: string;
+  field: string;
+  sortable?: boolean;
+  align: 'left' | 'right' | 'center';
+}[] = [
   { name: 'order_id', label: 'ID', field: 'order_id', sortable: true, align: 'left' },
   { name: 'amount', label: 'Valor', field: 'amount', sortable: true, align: 'left' },
   { name: 'installments', label: 'Parcelas', field: 'installments', sortable: true, align: 'left' },
-  { name: 'payment_method_id', label: 'Método de Pagamento', field: 'payment_method_id', sortable: true, align: 'left' },
+  {
+    name: 'payment_method_id',
+    label: 'Método de Pagamento',
+    field: 'payment_method_id',
+    sortable: true,
+    align: 'left',
+  },
   { name: 'user_id', label: 'Usuário', field: 'user_id', sortable: true, align: 'left' },
   { name: 'actions', label: 'Ações', field: 'actions', align: 'center' },
 ];
@@ -132,10 +144,7 @@ async function loadOrders() {
 
 async function loadOptions() {
   try {
-    const [methods, users] = await Promise.all([
-      paymentMethodService.list(),
-      userService.list(),
-    ]);
+    const [methods, users] = await Promise.all([paymentMethodService.list(), userService.list()]);
     paymentMethodOptions.value = methods;
     userOptions.value = users;
   } catch {
@@ -187,15 +196,21 @@ function confirmDelete(order: Order) {
     message: `Deseja excluir o pedido #${order.order_id}?`,
     cancel: true,
     persistent: true,
-  }).onOk(async () => {
-    try {
-      await orderService.remove(order.order_id);
-      $q.notify({ type: 'positive', message: 'Pedido excluído com sucesso!' });
-      await loadOrders();
-    } catch {
+  }).onOk(() => {
+    tryServiceRemove(order.order_id).catch(() => {
       $q.notify({ type: 'negative', message: 'Erro ao excluir pedido' });
-    }
+    });
   });
+}
+
+async function tryServiceRemove(order_id: number) {
+  try {
+    await orderService.remove(order_id);
+    $q.notify({ type: 'positive', message: 'Pedido excluído com sucesso!' });
+    await loadOrders();
+  } catch {
+    $q.notify({ type: 'negative', message: 'Erro ao excluir pedido' });
+  }
 }
 
 onMounted(async () => {

@@ -18,7 +18,14 @@
           <q-btn flat round color="primary" icon="edit" size="sm" @click="openDialog(props.row)">
             <q-tooltip>Editar</q-tooltip>
           </q-btn>
-          <q-btn flat round color="negative" icon="delete" size="sm" @click="confirmDelete(props.row)">
+          <q-btn
+            flat
+            round
+            color="negative"
+            icon="delete"
+            size="sm"
+            @click="confirmDelete(props.row)"
+          >
             <q-tooltip>Excluir</q-tooltip>
           </q-btn>
         </q-td>
@@ -28,16 +35,33 @@
     <q-dialog v-model="dialogVisible" persistent>
       <q-card style="width: 500px; max-width: 90vw">
         <q-card-section class="row items-center">
-          <div class="text-h6">{{ editing ? 'Editar Método de Pagamento' : 'Novo Método de Pagamento' }}</div>
+          <div class="text-h6">
+            {{ editing ? 'Editar Método de Pagamento' : 'Novo Método de Pagamento' }}
+          </div>
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section>
           <q-form @submit="savePaymentMethod" class="q-gutter-md">
-            <q-input v-model="form.name" label="Nome" outlined :rules="[val => !!val || 'Nome é obrigatório']" />
-            <q-input v-model="form.api_key" label="API Key" outlined :rules="[val => !!val || 'API Key é obrigatória']" />
-            <q-input v-model="form.secret" label="Secret" outlined :rules="[val => !!val || 'Secret é obrigatório']" />
+            <q-input
+              v-model="form.name"
+              label="Nome"
+              outlined
+              :rules="[(val) => !!val || 'Nome é obrigatório']"
+            />
+            <q-input
+              v-model="form.api_key"
+              label="API Key"
+              outlined
+              :rules="[(val) => !!val || 'API Key é obrigatória']"
+            />
+            <q-input
+              v-model="form.secret"
+              label="Secret"
+              outlined
+              :rules="[(val) => !!val || 'Secret é obrigatório']"
+            />
 
             <q-card-actions align="right" class="q-px-none">
               <q-btn flat label="Cancelar" color="grey" v-close-popup />
@@ -71,8 +95,20 @@ const form = ref({
   secret: '',
 });
 
-const columns: { name: string; label: string; field: string; sortable?: boolean; align: 'left' | 'right' | 'center' }[] = [
-  { name: 'paymentmethod_id', label: 'ID', field: 'paymentmethod_id', sortable: true, align: 'left' },
+const columns: {
+  name: string;
+  label: string;
+  field: string;
+  sortable?: boolean;
+  align: 'left' | 'right' | 'center';
+}[] = [
+  {
+    name: 'paymentmethod_id',
+    label: 'ID',
+    field: 'paymentmethod_id',
+    sortable: true,
+    align: 'left',
+  },
   { name: 'name', label: 'Nome', field: 'name', sortable: true, align: 'left' },
   { name: 'api_key', label: 'API Key', field: 'api_key', sortable: true, align: 'left' },
   { name: 'actions', label: 'Ações', field: 'actions', align: 'center' },
@@ -132,14 +168,16 @@ function confirmDelete(method: PaymentMethod) {
     message: `Deseja excluir o método de pagamento "${method.name}"?`,
     cancel: true,
     persistent: true,
-  }).onOk(async () => {
-    try {
-      await paymentMethodService.remove(method.paymentmethod_id);
-      $q.notify({ type: 'positive', message: 'Método de pagamento excluído com sucesso!' });
-      await loadPaymentMethods();
-    } catch {
-      $q.notify({ type: 'negative', message: 'Erro ao excluir método de pagamento' });
-    }
+  }).onOk(() => {
+    void (async () => {
+      try {
+        await paymentMethodService.remove(method.paymentmethod_id);
+        $q.notify({ type: 'positive', message: 'Método de pagamento excluído com sucesso!' });
+        await loadPaymentMethods();
+      } catch {
+        $q.notify({ type: 'negative', message: 'Erro ao excluir método de pagamento' });
+      }
+    })();
   });
 }
 

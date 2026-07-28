@@ -21,16 +21,29 @@ export default defineRouter((/* { store, ssrContext } */) => {
     history: createHistory(import.meta.env.QUASAR_VUE_ROUTER_BASE),
   });
 
-  Router.beforeEach((to, from, next) => {
-    const token = localStorage.getItem('jwt_token');
+  Router.beforeEach(async (to) => {
     const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
-    if (requiresAuth && !token) {
-      next('/login');
-    } else if (to.path === '/login' && token) {
-      next('/');
-    } else {
-      next();
+    if (requiresAuth) {
+      try {
+        const { data } = await import('@/services/api').then((m) => m.default.get('/me'));
+        if (to.path === '/login' && data) {
+          return '/';
+        }
+      } catch {
+        return '/login';
+      }
+    }
+
+    if (to.path === '/login') {
+      try {
+        const { data } = await import('@/services/api').then((m) => m.default.get('/me'));
+        if (data) {
+          return '/';
+        }
+      } catch {
+        // Permite ficar na tela de login
+      }
     }
   });
 
