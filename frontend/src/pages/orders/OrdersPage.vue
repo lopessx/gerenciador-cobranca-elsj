@@ -51,11 +51,9 @@
               :rules="[(val) => val > 0 || 'Parcelas deve ser maior que 0']"
             />
             <q-select
-              v-model="form.payment_method_id"
+              v-model="form.payment_method"
               label="Método de Pagamento"
               :options="paymentMethodOptions"
-              option-value="paymentmethod_id"
-              option-label="name"
               outlined
               emit-value
               map-options
@@ -88,25 +86,25 @@
 import { ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { orderService } from '@/services/orderService';
-import { paymentMethodService } from '@/services/paymentMethodService';
 import { userService } from '@/services/userService';
-import type { Order, PaymentMethod, User } from '@/types';
+import type { Order, User } from '@/types';
 
 const $q = useQuasar();
 
 const orders = ref<Order[]>([]);
-const paymentMethodOptions = ref<PaymentMethod[]>([]);
 const userOptions = ref<User[]>([]);
 const loading = ref(false);
 const dialogVisible = ref(false);
 const saving = ref(false);
 const editing = ref(false);
 
+const paymentMethodOptions = ['paghiper_boleto'];
+
 const form = ref({
   order_id: 0,
   amount: '',
   installments: 1,
-  payment_method_id: 0,
+  payment_method: 'paghiper_boleto',
   user_id: 0,
 });
 
@@ -121,9 +119,9 @@ const columns: {
   { name: 'amount', label: 'Valor', field: 'amount', sortable: true, align: 'left' },
   { name: 'installments', label: 'Parcelas', field: 'installments', sortable: true, align: 'left' },
   {
-    name: 'payment_method_id',
+    name: 'payment_method',
     label: 'Método de Pagamento',
-    field: 'payment_method_id',
+    field: 'payment_method',
     sortable: true,
     align: 'left',
   },
@@ -142,13 +140,11 @@ async function loadOrders() {
   }
 }
 
-async function loadOptions() {
+async function loadUsers() {
   try {
-    const [methods, users] = await Promise.all([paymentMethodService.list(), userService.list()]);
-    paymentMethodOptions.value = methods;
-    userOptions.value = users;
+    userOptions.value = await userService.list();
   } catch {
-    $q.notify({ type: 'negative', message: 'Erro ao carregar opções' });
+    $q.notify({ type: 'negative', message: 'Erro ao carregar usuários' });
   }
 }
 
@@ -162,7 +158,7 @@ function openDialog(order?: Order) {
       order_id: 0,
       amount: '',
       installments: 1,
-      payment_method_id: 0,
+      payment_method: 'paghiper_boleto',
       user_id: 0,
     };
   }
@@ -197,24 +193,20 @@ function confirmDelete(order: Order) {
     cancel: true,
     persistent: true,
   }).onOk(() => {
-    tryServiceRemove(order.order_id).catch(() => {
-      $q.notify({ type: 'negative', message: 'Erro ao excluir pedido' });
-    });
+    void (async () => {
+      try {
+        await orderService.remove(order.order_id);
+        $q.notify({ type: 'positive', message: 'Pedido excluído com sucesso!' });
+        await loadOrders();
+      } catch {
+        $q.notify({ type: 'negative', message: 'Erro ao excluir pedido' });
+      }
+    })();
   });
 }
 
-async function tryServiceRemove(order_id: number) {
-  try {
-    await orderService.remove(order_id);
-    $q.notify({ type: 'positive', message: 'Pedido excluído com sucesso!' });
-    await loadOrders();
-  } catch {
-    $q.notify({ type: 'negative', message: 'Erro ao excluir pedido' });
-  }
-}
-
 onMounted(async () => {
-  await loadOptions();
+  await loadUsers();
   await loadOrders();
 });
 </script>

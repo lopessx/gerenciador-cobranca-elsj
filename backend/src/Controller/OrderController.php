@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\Order;
-use App\Entity\PaymentMethod;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -34,11 +33,6 @@ class OrderController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        $paymentMethod = $this->em->getRepository(PaymentMethod::class)->find($data['payment_method_id'] ?? 0);
-        if (!$paymentMethod) {
-            return $this->json(['error' => 'Payment method not found'], 404);
-        }
-
         $user = $this->em->getRepository(User::class)->find($data['user_id'] ?? 0);
         if (!$user) {
             return $this->json(['error' => 'User not found'], 404);
@@ -47,7 +41,7 @@ class OrderController extends AbstractController
         $order = new Order();
         $order->setAmount($data['amount'] ?? '0');
         $order->setInstallments($data['installments'] ?? 1);
-        $order->setPaymentMethod($paymentMethod);
+        $order->setPaymentMethod($data['payment_method'] ?? 'paghiper_boleto');
         $order->setUser($user);
 
         $errors = $this->validator->validate($order);
@@ -87,12 +81,8 @@ class OrderController extends AbstractController
         if (isset($data['installments'])) {
             $order->setInstallments($data['installments']);
         }
-        if (isset($data['payment_method_id'])) {
-            $paymentMethod = $this->em->getRepository(PaymentMethod::class)->find($data['payment_method_id']);
-            if (!$paymentMethod) {
-                return $this->json(['error' => 'Payment method not found'], 404);
-            }
-            $order->setPaymentMethod($paymentMethod);
+        if (isset($data['payment_method'])) {
+            $order->setPaymentMethod($data['payment_method']);
         }
         if (isset($data['user_id'])) {
             $user = $this->em->getRepository(User::class)->find($data['user_id']);

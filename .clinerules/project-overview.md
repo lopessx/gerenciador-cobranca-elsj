@@ -29,8 +29,8 @@ Projeto **Cobri - Gerenciador de Pagamentos**: aplicação fullstack para gestã
 - Framework: **Quasar v2** com **Vue 3** (Composition API + `<script setup>`) e **TypeScript**.
 - Gerenciamento de estado: **Pinia** (store modular em `src/stores/`).
 - Requisições HTTP: **Axios** centralizado em `src/services/api.ts` com interceptors para JWT.
-- Services por domínio: `userService.ts`, `orderService.ts`, `paymentMethodService.ts` — padrão objeto com métodos `list`, `get`, `create`, `update`, `remove`.
-- Tipos centralizados em `src/types/index.ts` (interfaces `User`, `Order`, `PaymentMethod`).
+- Services por domínio: `userService.ts`, `orderService.ts` — padrão objeto com métodos `list`, `get`, `create`, `update`, `remove`.
+- Tipos centralizados em `src/types/index.ts` (interfaces `User`, `Order`).
 - Router: modo `hash`, guards no `beforeEach` para proteção de rotas (`meta.requiresAuth`).
 - Layout principal: `MainLayout.vue` com `QLayout` (drawer + toolbar + logout).
 - Componentes Quasar preferidos: `QTable`, `QInput`, `QBtn`, `QCard`, `QDialog`, `QNotify`.
@@ -42,7 +42,8 @@ Projeto **Cobri - Gerenciador de Pagamentos**: aplicação fullstack para gestã
 - Banco: **MySQL 8.0** via Docker (`docker-compose.yml`).
 - Doctrine configurado para `pdo_mysql`, `utf8mb4`, naming strategy `underscore_number_aware`.
 - Migrations gerenciadas pelo `DoctrineMigrationsBundle`.
-- Convenção de nomenclatura de tabelas/campos: `snake_case` no banco (ex: `payment_methods`, `paymentmethod_id`).
+- Convenção de nomenclatura de tabelas/campos: `snake_case` no banco (ex: `user_id`, `order_id`).
+- Schema atual: tabelas `users` (com `role` enum `admin`/`operator`) e `orders` (com `payment_method` string, referência `user_id`).
 
 ---
 
@@ -62,8 +63,8 @@ Projeto **Cobri - Gerenciador de Pagamentos**: aplicação fullstack para gestã
 
 - **PHP**: `PascalCase` classes, `camelCase` métodos/propriedades, `snake_case` campos de banco.
 - **TypeScript/Vue**: `PascalCase` componentes, `camelCase` variáveis/funções, `kebab-case` rotas e nomes de arquivos `.vue`.
-- **API endpoints**: `kebab-case` (ex: `/api/payment-methods`).
-- **Entidades**: IDs compostos com nome da entidade (ex: `userId`, `orderId`, `paymentmethodId`).
+- **API endpoints**: `kebab-case` (ex: `/api/orders`).
+- **Entidades**: IDs compostos com nome da entidade (ex: `userId`, `orderId`).
 
 ---
 

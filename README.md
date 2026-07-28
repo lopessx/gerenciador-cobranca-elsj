@@ -35,7 +35,15 @@ O projeto tem como objetivo centralizar e simplificar o gerenciamento de cobran�
    symfony server:start
    ```
 
-3. Inicie o frontend:
+3. Rode o seed para criar o usuário admin padrão:
+   ```bash
+   cd backend
+   php bin/console app:seed-user
+   ```
+   > O comando lê as variáveis `DEFAULT_ADMIN_EMAIL` e `DEFAULT_ADMIN_PASSWORD` do `backend/.env`.  
+   > Se quiser alterar o e-mail/senha do admin, edite essas variáveis antes de executar o seed.
+
+4. Inicie o frontend:
    ```bash
    cd frontend
    npm install

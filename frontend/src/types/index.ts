@@ -6,17 +6,10 @@ export interface User {
   role: 'admin' | 'operator';
 }
 
-export interface PaymentMethod {
-  paymentmethod_id: number;
-  name: string;
-  api_key: string;
-  secret: string;
-}
-
 export interface Order {
   order_id: number;
   amount: string;
   installments: number;
-  payment_method_id: number;
+  payment_method: string;
   user_id: number;
 }

@@ -32,12 +32,6 @@
           <q-item-section>Usuários</q-item-section>
         </q-item>
 
-        <q-item clickable v-ripple to="/payment-methods">
-          <q-item-section avatar>
-            <q-icon name="credit_card" />
-          </q-item-section>
-          <q-item-section>Métodos de Pagamento</q-item-section>
-        </q-item>
 
         <q-item clickable v-ripple to="/orders">
           <q-item-section avatar>

@@ -22,9 +22,9 @@ class Order
     #[Assert\NotBlank]
     private int $installments;
 
-    #[ORM\ManyToOne(targetEntity: PaymentMethod::class, inversedBy: 'orders')]
-    #[ORM\JoinColumn(name: 'payment_method_id', referencedColumnName: 'paymentmethod_id', nullable: false)]
-    private PaymentMethod $paymentMethod;
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Assert\NotBlank]
+    private string $paymentMethod;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'orders')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'user_id', nullable: false)]
@@ -57,12 +57,12 @@ class Order
         return $this;
     }
 
-    public function getPaymentMethod(): PaymentMethod
+    public function getPaymentMethod(): string
     {
         return $this->paymentMethod;
     }
 
-    public function setPaymentMethod(PaymentMethod $paymentMethod): self
+    public function setPaymentMethod(string $paymentMethod): self
     {
         $this->paymentMethod = $paymentMethod;
         return $this;
@@ -85,7 +85,7 @@ class Order
             'order_id' => $this->orderId,
             'amount' => $this->amount,
             'installments' => $this->installments,
-            'payment_method_id' => $this->paymentMethod->getPaymentmethodId(),
+            'payment_method' => $this->paymentMethod,
             'user_id' => $this->user->getUserId(),
         ];
     }
