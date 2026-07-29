@@ -20,5 +20,11 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+    # Configuração de auto-tagging para gateways de pagamento
+    # Qualquer classe que implemente PaymentGatewayInterface recebe automaticamente a tag 'app.payment_gateway'
+    _instanceof:
+        App\Payment\Contract\PaymentGatewayInterface:
+            tags: ['app.payment_gateway']
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
