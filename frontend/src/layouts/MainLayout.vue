@@ -39,6 +39,13 @@
           </q-item-section>
           <q-item-section>Pedidos</q-item-section>
         </q-item>
+
+        <q-item clickable v-ripple to="/payment-settings">
+          <q-item-section avatar>
+            <q-icon name="settings" />
+          </q-item-section>
+          <q-item-section>Pagamentos</q-item-section>
+        </q-item>
       </q-list>
     </q-drawer>
 

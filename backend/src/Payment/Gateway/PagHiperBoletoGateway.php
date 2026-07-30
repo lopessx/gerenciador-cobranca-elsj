@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 class PagHiperBoletoGateway extends AbstractPaymentGateway
 {
     private const BASE_URL = 'https://api.paghiper.com';
-    private const TRANSACTION_ENDPOINT = '/transaction/create/';
+    private const TRANSACTION_ENDPOINT = '/transaction/multiple_bank_slip/';
     private const CONSULT_ENDPOINT = '/transaction/notification/';
     private const CANCEL_ENDPOINT = '/transaction/cancel/';
 
