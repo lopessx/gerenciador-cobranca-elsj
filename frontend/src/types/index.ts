@@ -6,12 +6,23 @@ export interface User {
   role: 'admin' | 'operator';
 }
 
+export interface Client {
+  client_id: number;
+  name: string;
+  cpf: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+}
+
 export interface Order {
   order_id: number;
   amount: string;
   installments: number;
   payment_method: string;
-  user_id: number;
+  client_id: number;
+  client_name: string;
+  client_cpf: string;
 }
 
 export interface PaymentGatewaySchema {

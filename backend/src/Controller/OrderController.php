@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Order;
-use App\Entity\User;
+use App\Entity\Client;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -33,16 +33,16 @@ class OrderController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        $user = $this->em->getRepository(User::class)->find($data['user_id'] ?? 0);
-        if (!$user) {
-            return $this->json(['error' => 'User not found'], 404);
+        $client = $this->em->getRepository(Client::class)->find($data['client_id'] ?? 0);
+        if (!$client) {
+            return $this->json(['error' => 'Client not found'], 404);
         }
 
         $order = new Order();
         $order->setAmount($data['amount'] ?? '0');
         $order->setInstallments($data['installments'] ?? 1);
         $order->setPaymentMethod($data['payment_method'] ?? 'paghiper_boleto');
-        $order->setUser($user);
+        $order->setClient($client);
 
         $errors = $this->validator->validate($order);
         if (count($errors) > 0) {
@@ -84,12 +84,12 @@ class OrderController extends AbstractController
         if (isset($data['payment_method'])) {
             $order->setPaymentMethod($data['payment_method']);
         }
-        if (isset($data['user_id'])) {
-            $user = $this->em->getRepository(User::class)->find($data['user_id']);
-            if (!$user) {
-                return $this->json(['error' => 'User not found'], 404);
+        if (isset($data['client_id'])) {
+            $client = $this->em->getRepository(Client::class)->find($data['client_id']);
+            if (!$client) {
+                return $this->json(['error' => 'Client not found'], 404);
             }
-            $order->setUser($user);
+            $order->setClient($client);
         }
 
         $errors = $this->validator->validate($order);

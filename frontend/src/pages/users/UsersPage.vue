@@ -5,7 +5,16 @@
       <q-btn color="primary" icon="add" label="Novo" @click="openDialog()" />
     </div>
 
-    <q-table :rows="users" :columns="columns" row-key="user_id" :loading="loading" flat bordered>
+    <q-table
+      :rows="users"
+      :columns="columns"
+      row-key="user_id"
+      :loading="loading"
+      flat
+      bordered
+      no-data-label="Nenhum usuário criado ainda"
+      no-results-label="Pesquisa não encontrou nehum resultado"
+    >
       <template v-slot:body-cell-actions="props">
         <q-td :props="props" class="q-gutter-sm">
           <q-btn flat round color="primary" icon="edit" size="sm" @click="openDialog(props.row)">

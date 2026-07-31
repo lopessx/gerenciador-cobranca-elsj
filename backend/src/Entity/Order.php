@@ -26,9 +26,9 @@ class Order
     #[Assert\NotBlank]
     private string $paymentMethod;
 
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'orders')]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'user_id', nullable: false)]
-    private User $user;
+    #[ORM\ManyToOne(targetEntity: Client::class)]
+    #[ORM\JoinColumn(name: 'client_id', referencedColumnName: 'client_id', nullable: false)]
+    private Client $client;
 
     public function getOrderId(): int
     {
@@ -68,14 +68,14 @@ class Order
         return $this;
     }
 
-    public function getUser(): User
+    public function getClient(): Client
     {
-        return $this->user;
+        return $this->client;
     }
 
-    public function setUser(User $user): self
+    public function setClient(Client $client): self
     {
-        $this->user = $user;
+        $this->client = $client;
         return $this;
     }
 
@@ -86,7 +86,9 @@ class Order
             'amount' => $this->amount,
             'installments' => $this->installments,
             'payment_method' => $this->paymentMethod,
-            'user_id' => $this->user->getUserId(),
+            'client_id' => $this->client->getClientId(),
+            'client_name' => $this->client->getName(),
+            'client_cpf' => $this->client->getCpf(),
         ];
     }
 }

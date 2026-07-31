@@ -43,6 +43,7 @@
                 :label="field.label"
                 :required="field.required"
                 outlined
+                stack-label
                 dense
               />
 
@@ -54,6 +55,7 @@
                 :required="field.required"
                 :type="passwordVisibility[gateway.name]?.[field.name] ? 'text' : 'password'"
                 outlined
+                stack-label
                 dense
               >
                 <template #append>
@@ -73,6 +75,7 @@
                 :required="field.required"
                 type="number"
                 outlined
+                stack-label
                 dense
               />
 

@@ -4,7 +4,7 @@
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
-        <q-toolbar-title> Cobri - Gerenciador de Pagamentos </q-toolbar-title>
+        <q-toolbar-title>Cobri</q-toolbar-title>
 
         <div class="row items-center q-gutter-sm">
           <q-btn flat round icon="logout" @click="logout">
@@ -44,7 +44,7 @@
           <q-item-section avatar>
             <q-icon name="settings" />
           </q-item-section>
-          <q-item-section>Pagamentos</q-item-section>
+          <q-item-section>Configurar Pagamentos</q-item-section>
         </q-item>
       </q-list>
     </q-drawer>
