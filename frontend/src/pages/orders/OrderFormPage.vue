@@ -17,14 +17,25 @@
             type="number"
             step="0.01"
             outlined
-            :rules="[(val: string) => !!val || 'Valor é obrigatório']"
+            @update:model-value="clampAmount"
+            :rules="[
+              (val: string) => (!!val && Number(val) > 0) || 'Valor é obrigatório',
+              (val: string) => !val || Number(val) >= 3 || 'Valor mínimo R$ 3,00',
+            ]"
           />
           <q-input
             v-model.number="form.installments"
             label="Parcelas"
             type="number"
+            mask="##"
+            min="1"
+            max="12"
             outlined
-            :rules="[(val: number) => val > 0 || 'Parcelas deve ser maior que 0']"
+            :rules="[
+              (val: number) => !!val || 'Parcelas é obrigatório',
+              (val: number) => (val >= 1 && val <= 12) || 'Parcelas deve ser entre 1 e 12',
+            ]"
+            @update:model-value="clampInstallments"
           />
           <q-select
             v-model="form.payment_method"
@@ -39,11 +50,11 @@
           <q-separator />
 
           <!-- Dados do Cliente -->
-          <div class="text-subtitle1 text-bold">Dados do Cliente (Paciente)</div>
+          <div class="text-subtitle1 text-bold">Dados do Paciente</div>
 
           <q-select
             v-model="selectedExistingClient"
-            label="Selecionar cliente existente"
+            label="Selecionar paciente existente"
             :options="clientOptions"
             option-value="client_id"
             option-label="name"
@@ -51,16 +62,27 @@
             emit-value
             map-options
             clearable
+            use-input
+            input-debounce="300"
+            @filter="onFilterClients"
+            @filter-abort="onFilterAbort"
             @update:model-value="onSelectExistingClient"
-          />
+          >
+            <template #no-option>
+              <q-item>
+                <q-item-section class="text-grey"> Nenhum paciente encontrado </q-item-section>
+              </q-item>
+            </template>
+          </q-select>
 
-          <div class="text-center text-grey-6">ou cadastre um novo cliente</div>
+          <div class="text-center text-grey-6">ou cadastre um novo paciente</div>
 
           <q-input
             v-model="clientForm.name"
             label="Nome completo"
             outlined
             :rules="[(val: string) => !!val || 'Nome é obrigatório']"
+            @update:model-value="markClientFormDirty"
           />
           <q-input
             v-model="clientForm.cpf"
@@ -69,25 +91,22 @@
             mask="###.###.###-##"
             unmasked-value
             :rules="[(val: string) => !!val || 'CPF é obrigatório']"
+            @update:model-value="markClientFormDirty"
           />
           <q-input
             v-model="clientForm.email"
-            label="E-mail"
+            label="E-mail (opcional)"
             type="email"
             outlined
+            @update:model-value="markClientFormDirty"
           />
           <q-input
             v-model="clientForm.phone"
-            label="Telefone"
+            label="Telefone (opcional)"
             outlined
             mask="(##) #####-####"
             unmasked-value
-          />
-          <q-input
-            v-model="clientForm.address"
-            label="Endereço"
-            outlined
-            type="textarea"
+            @update:model-value="markClientFormDirty"
           />
 
           <q-card-actions align="right" class="q-px-none">
@@ -117,9 +136,10 @@ const isEditing = computed(() => route.params.id !== undefined);
 
 const clientOptions = ref<Client[]>([]);
 const selectedExistingClient = ref<number | null>(null);
+const isClientFormDirty = ref(false);
 const saving = ref(false);
 
-const paymentMethodOptions = ['paghiper_boleto'];
+const paymentMethodOptions = [{ label: 'Boleto carnê', value: 'paghiper_boleto' }];
 
 const form = ref({
   amount: '',
@@ -135,12 +155,49 @@ const clientForm = ref({
   address: '',
 });
 
-async function loadClients() {
-  try {
-    clientOptions.value = await clientService.list();
-  } catch {
-    $q.notify({ type: 'negative', message: 'Erro ao carregar clientes' });
+// Track when user modifies client fields after selecting an existing client
+function markClientFormDirty() {
+  if (selectedExistingClient.value) {
+    isClientFormDirty.value = true;
   }
+}
+
+function clampAmount(val: string | number | null) {
+  const num = parseFloat(String(val ?? ''));
+  if (isNaN(num) || num < 0) {
+    form.value.amount = '0';
+  }
+}
+
+function clampInstallments(val: number | string | null) {
+  const num = Number(val);
+  if (isNaN(num) || num < 1) {
+    form.value.installments = 1;
+  } else if (num > 12) {
+    form.value.installments = 12;
+  }
+}
+
+function onFilterClients(val: string, update: (fn: () => void) => void) {
+  if (val === '') {
+    update(() => {
+      clientOptions.value = [];
+    });
+    return;
+  }
+  update(() => {
+    void (async () => {
+      try {
+        clientOptions.value = await clientService.search(val);
+      } catch {
+        $q.notify({ type: 'negative', message: 'Erro ao buscar pacientes' });
+      }
+    })();
+  });
+}
+
+function onFilterAbort() {
+  // nothing to clean up
 }
 
 function onSelectExistingClient(clientId: number | null) {
@@ -154,9 +211,11 @@ function onSelectExistingClient(clientId: number | null) {
         phone: client.phone ?? '',
         address: client.address ?? '',
       };
+      isClientFormDirty.value = false;
     }
   } else {
     clientForm.value = { name: '', cpf: '', email: '', phone: '', address: '' };
+    isClientFormDirty.value = false;
   }
 }
 
@@ -196,6 +255,14 @@ async function saveOrder() {
         address: clientForm.value.address || null,
       });
       clientId = client.client_id;
+    } else if (isClientFormDirty.value) {
+      await clientService.update(clientId, {
+        name: clientForm.value.name,
+        cpf: clientForm.value.cpf,
+        email: clientForm.value.email || null,
+        phone: clientForm.value.phone || null,
+        address: clientForm.value.address || null,
+      });
     }
 
     const orderData = {
@@ -203,6 +270,8 @@ async function saveOrder() {
       installments: form.value.installments,
       payment_method: form.value.payment_method,
       client_id: clientId,
+      client_name: clientForm.value.name,
+      client_cpf: clientForm.value.cpf,
     };
 
     if (isEditing.value) {
@@ -213,7 +282,7 @@ async function saveOrder() {
       $q.notify({ type: 'positive', message: 'Pedido criado com sucesso!' });
     }
 
-    router.push('/orders');
+    await router.push('/orders');
   } catch {
     $q.notify({ type: 'negative', message: 'Erro ao salvar pedido' });
   } finally {
@@ -221,8 +290,7 @@ async function saveOrder() {
   }
 }
 
-onMounted(async () => {
-  await loadClients();
-  await loadOrder();
+onMounted(() => {
+  void loadOrder();
 });
 </script>

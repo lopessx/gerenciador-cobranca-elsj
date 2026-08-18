@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -29,6 +31,17 @@ class Order
     #[ORM\ManyToOne(targetEntity: Client::class)]
     #[ORM\JoinColumn(name: 'client_id', referencedColumnName: 'client_id', nullable: false)]
     private Client $client;
+
+    /**
+     * @var Collection<int, OrderInstallment>
+     */
+    #[ORM\OneToMany(mappedBy: 'order', targetEntity: OrderInstallment::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $installmentItems;
+
+    public function __construct()
+    {
+        $this->installmentItems = new ArrayCollection();
+    }
 
     public function getOrderId(): int
     {
@@ -79,6 +92,23 @@ class Order
         return $this;
     }
 
+    /**
+     * @return Collection<int, OrderInstallment>
+     */
+    public function getInstallmentsCollection(): Collection
+    {
+        return $this->installmentItems;
+    }
+
+    public function addInstallment(OrderInstallment $installment): self
+    {
+        if (!$this->installmentItems->contains($installment)) {
+            $this->installmentItems->add($installment);
+            $installment->setOrder($this);
+        }
+        return $this;
+    }
+
     public function toArray(): array
     {
         return [
@@ -89,6 +119,9 @@ class Order
             'client_id' => $this->client->getClientId(),
             'client_name' => $this->client->getName(),
             'client_cpf' => $this->client->getCpf(),
+            'installments_data' => $this->installmentItems->map(
+                fn(OrderInstallment $i) => $i->toArray()
+            )->toArray(),
         ];
     }
 }

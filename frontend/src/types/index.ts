@@ -23,6 +23,20 @@ export interface Order {
   client_id: number;
   client_name: string;
   client_cpf: string;
+  installments_data?: InstallmentData[];
+  installments_generated?: number;
+}
+
+export interface InstallmentData {
+  id: number;
+  order_id: number;
+  installment_number: number;
+  due_date: string;
+  amount: string;
+  gateway_transaction_id: string | null;
+  bank_slip_url: string | null;
+  bank_slip_barcode: string | null;
+  gateway_status: string;
 }
 
 export interface PaymentGatewaySchema {

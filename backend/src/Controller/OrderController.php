@@ -4,6 +4,9 @@ namespace App\Controller;
 
 use App\Entity\Order;
 use App\Entity\Client;
+use App\Entity\OrderInstallment;
+use App\Entity\PaymentSettings;
+use App\Payment\GatewayRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,6 +20,7 @@ class OrderController extends AbstractController
     public function __construct(
         private EntityManagerInterface $em,
         private ValidatorInterface $validator,
+        private GatewayRegistry $gatewayRegistry,
     ) {
     }
 
@@ -40,7 +44,7 @@ class OrderController extends AbstractController
 
         $order = new Order();
         $order->setAmount($data['amount'] ?? '0');
-        $order->setInstallments($data['installments'] ?? 1);
+        $order->setInstallments((int) ($data['installments'] ?? 1));
         $order->setPaymentMethod($data['payment_method'] ?? 'paghiper_boleto');
         $order->setClient($client);
 
@@ -52,7 +56,15 @@ class OrderController extends AbstractController
         $this->em->persist($order);
         $this->em->flush();
 
-        return $this->json($order->toArray(), 201);
+        $installmentsGenerated = [];
+        if ($order->getPaymentMethod() === 'paghiper_boleto') {
+            $installmentsGenerated = $this->generateBankSlips($order);
+        }
+
+        $result = $order->toArray();
+        $result['installments_generated'] = count($installmentsGenerated);
+
+        return $this->json($result, 201);
     }
 
     #[Route('/{id}', name: 'order_show', methods: ['GET'])]
@@ -114,5 +126,74 @@ class OrderController extends AbstractController
         $this->em->flush();
 
         return $this->json(null, 204);
+    }
+
+    #[Route('/{id}/generate-bank-slips', name: 'order_generate_bank_slips', methods: ['POST'])]
+    public function generateBankSlipsAction(int $id): JsonResponse
+    {
+        $order = $this->em->getRepository(Order::class)->find($id);
+        if (!$order) {
+            return $this->json(['error' => 'Order not found'], 404);
+        }
+
+        if ($order->getPaymentMethod() !== 'paghiper_boleto') {
+            return $this->json(['error' => 'Geracao de boletos disponivel apenas para paghiper_boleto'], 400);
+        }
+
+        $installmentsGenerated = $this->generateBankSlips($order);
+
+        return $this->json([
+            'message' => count($installmentsGenerated) . ' boleto(s) gerado(s) com sucesso.',
+            'installments_data' => $order->toArray()['installments_data'],
+        ]);
+    }
+
+    private function generateBankSlips(Order $order): array
+    {
+        $gateway = $this->gatewayRegistry->get('paghiper_boleto');
+
+        $settingsRepo = $this->em->getRepository(PaymentSettings::class);
+        $settingsEntities = $settingsRepo->findBy(['paymentGateway' => 'paghiper_boleto']);
+
+        $config = [];
+        foreach ($settingsEntities as $setting) {
+            $config[$setting->getOptionName()] = $setting->getValue();
+        }
+
+        $results = $gateway->processInstallments($order, $config);
+
+        $installmentsGenerated = [];
+
+        foreach ($results as $index => $result) {
+            $parcelaNum = $index + 1;
+            $totalParcelas = $order->getInstallments();
+
+            $installment = new OrderInstallment();
+            $installment->setOrder($order);
+            $installment->setInstallmentNumber($parcelaNum);
+
+            $dueDate = new \DateTime("+{$parcelaNum} months");
+            $installment->setDueDate($dueDate);
+
+            $totalAmount = (float) $order->getAmount();
+            $parcelaAmount = round($totalAmount / $totalParcelas, 2);
+            $installment->setAmount((string) $parcelaAmount);
+
+            if ($result->isSuccess()) {
+                $installment->setGatewayTransactionId($result->getGatewayTransactionId());
+                $installment->setGatewayStatus($result->getGatewayStatus() ?? 'PENDING');
+                $installment->setBankSlipUrl($result->getBankSlipUrl());
+                $installment->setBankSlipBarcode($result->getBankSlipBarcode());
+            } else {
+                $installment->setGatewayStatus('ERROR');
+            }
+
+            $this->em->persist($installment);
+            $installmentsGenerated[] = $installment;
+        }
+
+        $this->em->flush();
+
+        return $installmentsGenerated;
     }
 }

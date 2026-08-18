@@ -47,6 +47,16 @@ interface PaymentGatewayInterface
     public function processOrder(Order $order, array $config): PaymentResult;
 
     /**
+     * Processa múltiplas parcelas de um carnê e retorna os resultados.
+     * Cada item do array de retorno contém o resultado de uma parcela.
+     *
+     * @param Order $order  Entidade Order com os dados da cobrança
+     * @param array $config Configuração do gateway
+     * @return PaymentResult[] Array de resultados, um por parcela
+     */
+    public function processInstallments(Order $order, array $config): array;
+
+    /**
      * Trata o webhook recebido da adquirente, validando assinatura e atualizando status.
      */
     public function handleWebhook(Request $request, array $config): Response;

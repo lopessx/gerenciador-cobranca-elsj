@@ -88,7 +88,7 @@ async function onSubmit() {
     });
     $q.notify({ type: 'positive', message: 'Login realizado com sucesso!' });
 
-    await router.push({path: '/'});
+    await router.push({ path: '/' });
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };
     $q.notify({

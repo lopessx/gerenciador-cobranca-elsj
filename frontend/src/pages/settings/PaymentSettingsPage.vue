@@ -3,7 +3,13 @@
     <div class="row items-center q-mb-md">
       <div class="text-h5">Configurações de Métodos de Pagamento</div>
       <q-space />
-      <q-btn color="primary" icon="save" label="Salvar todas as configurações" :loading="saving" @click="saveAll" />
+      <q-btn
+        color="primary"
+        icon="save"
+        label="Salvar todas as configurações"
+        :loading="saving"
+        @click="saveAll"
+      />
     </div>
 
     <div v-if="loading" class="flex flex-center q-py-xl">
@@ -17,8 +23,7 @@
             <div>
               <div class="text-h6">{{ gateway.label }}</div>
               <div class="text-caption text-grey-7">
-                Slug: {{ gateway.name }} &middot;
-                Métodos: {{ gateway.payment_methods.join(', ') }}
+                Slug: {{ gateway.name }} &middot; Métodos: {{ gateway.payment_methods.join(', ') }}
                 <template v-if="gateway.supports_installments">
                   &middot; Suporta parcelamento
                 </template>
@@ -60,7 +65,11 @@
               >
                 <template #append>
                   <q-icon
-                    :name="passwordVisibility[gateway.name]?.[field.name] ? 'visibility_off' : 'visibility'"
+                    :name="
+                      passwordVisibility[gateway.name]?.[field.name]
+                        ? 'visibility_off'
+                        : 'visibility'
+                    "
                     class="cursor-pointer"
                     @click="togglePasswordVisibility(gateway.name, field.name)"
                   />
@@ -125,7 +134,9 @@ const saving = ref(false);
 const gateways = ref<PaymentGatewaySchema[]>([]);
 
 // formValues[gatewayName][fieldName] = value
-const formValues = reactive<Record<string, Record<string, boolean | number | string | undefined>>>({});
+const formValues = reactive<Record<string, Record<string, boolean | number | string | undefined>>>(
+  {},
+);
 
 // Helper tipado como any para evitar erros TS2322 e TS2532 no template
 // (boolean não é aceito por QInput/QSelect; Record aninhado causa "possibly undefined" no index access)
@@ -170,7 +181,7 @@ async function fetchSettings() {
     let errorMsg = '';
 
     if (error instanceof Error) {
-        errorMsg = error.message;
+      errorMsg = error.message;
     }
 
     $q.notify({ type: 'negative', message: 'Erro ao carregar configurações. ' + errorMsg });
@@ -207,9 +218,9 @@ async function saveAll() {
     let errorMsg = '';
 
     if (error instanceof Error) {
-        errorMsg = error.message;
+      errorMsg = error.message;
     }
-    $q.notify({ type: 'negative', message: 'Erro ao salvar configurações. ' + errorMsg});
+    $q.notify({ type: 'negative', message: 'Erro ao salvar configurações. ' + errorMsg });
   } finally {
     saving.value = false;
   }
@@ -217,7 +228,7 @@ async function saveAll() {
 
 onMounted(() => {
   fetchSettings().catch(() => {
-        $q.notify({ type: 'negative', message: 'Erro ao carregar configurações.'});
+    $q.notify({ type: 'negative', message: 'Erro ao carregar configurações.' });
   });
 });
 </script>

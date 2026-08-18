@@ -8,4 +8,8 @@ export const orderService = {
   update: (id: number, data: Partial<Omit<Order, 'order_id'>>) =>
     api.put<Order>(`/orders/${id}`, data).then((r) => r.data),
   remove: (id: number) => api.delete(`/orders/${id}`),
+  generateBankSlips: (id: number) =>
+    api
+      .post<{ message: string; installments_data: unknown[] }>(`/orders/${id}/generate-bank-slips`)
+      .then((r) => r.data),
 };

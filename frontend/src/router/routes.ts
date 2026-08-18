@@ -15,7 +15,10 @@ const routes: RouteRecordRaw[] = [
       { path: 'orders', component: () => import('@/pages/orders/OrdersPage.vue') },
       { path: 'orders/new', component: () => import('@/pages/orders/OrderFormPage.vue') },
       { path: 'orders/:id/edit', component: () => import('@/pages/orders/OrderFormPage.vue') },
-      { path: 'payment-settings', component: () => import('@/pages/settings/PaymentSettingsPage.vue') },
+      {
+        path: 'payment-settings',
+        component: () => import('@/pages/settings/PaymentSettingsPage.vue'),
+      },
     ],
   },
 

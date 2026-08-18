@@ -20,9 +20,19 @@ class ClientController extends AbstractController
     }
 
     #[Route('', name: 'client_list', methods: ['GET'])]
-    public function list(): JsonResponse
+    public function list(Request $request): JsonResponse
     {
-        $clients = $this->em->getRepository(Client::class)->findAll();
+        $qb = $this->em->getRepository(Client::class)->createQueryBuilder('c');
+
+        $q = $request->query->get('q');
+        if ($q) {
+            $qb
+                ->where('c.name LIKE :q')
+                ->orWhere('c.cpf LIKE :q')
+                ->setParameter('q', '%' . $q . '%');
+        }
+
+        $clients = $qb->getQuery()->getResult();
         $data = array_map(fn(Client $client) => $client->toArray(), $clients);
         return $this->json($data);
     }

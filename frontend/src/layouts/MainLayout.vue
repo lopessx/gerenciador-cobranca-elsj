@@ -32,7 +32,6 @@
           <q-item-section>Usuários</q-item-section>
         </q-item>
 
-
         <q-item clickable v-ripple to="/orders">
           <q-item-section avatar>
             <q-icon name="shopping_cart" />

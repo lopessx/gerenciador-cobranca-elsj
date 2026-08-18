@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 class PagHiperBoletoGateway extends AbstractPaymentGateway
 {
     private const BASE_URL = 'https://api.paghiper.com';
-    private const TRANSACTION_ENDPOINT = '/transaction/multiple_bank_slip/';
+    private const TRANSACTION_ENDPOINT = '/transaction/create/';
     private const CONSULT_ENDPOINT = '/transaction/notification/';
     private const CANCEL_ENDPOINT = '/transaction/cancel/';
 
@@ -42,7 +42,7 @@ class PagHiperBoletoGateway extends AbstractPaymentGateway
             ],
             [
                 'name' => 'days_due_date',
-                'label' => 'Dias para vencimento do boleto',
+                'label' => 'Dias para vencimento do boleto (usado para pedido avulso)',
                 'type' => 'number',
                 'required' => false,
             ],
@@ -75,7 +75,7 @@ class PagHiperBoletoGateway extends AbstractPaymentGateway
 
     public function supportsInstallments(): bool
     {
-        return false;
+        return true;
     }
 
     public function getSupportedPaymentMethods(): array
@@ -83,6 +83,9 @@ class PagHiperBoletoGateway extends AbstractPaymentGateway
         return ['boleto'];
     }
 
+    /**
+     * Processa uma única cobrança (boleto avulso, sem carnê).
+     */
     public function processOrder(Order $order, array $config): PaymentResult
     {
         $apiKey = $config['api_key'] ?? null;
@@ -92,59 +95,51 @@ class PagHiperBoletoGateway extends AbstractPaymentGateway
             return PaymentResult::failure($order, 'Credenciais PagHiper não configuradas: api_key e token são obrigatórios.');
         }
 
-        $payload = $this->buildCreateTransactionPayload($order, $config);
+        $daysDueDate = (int) ($config['days_due_date'] ?? 3);
+        $dueDate = (new \DateTime("+{$daysDueDate} days"))->format('Y-m-d');
 
-        try {
-            $response = $this->httpClient->request('POST', self::BASE_URL . self::TRANSACTION_ENDPOINT, [
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => $payload,
-                'timeout' => 30,
-            ]);
+        $payload = $this->buildPayload($order, $config, 1, 1, $dueDate);
 
-            $statusCode = $response->getStatusCode();
-            $body = $response->toArray(false);
+        return $this->sendTransactionRequest($order, $payload);
+    }
 
-            $this->logger->info('PagHiper transaction create response', [
-                'status_code' => $statusCode,
-                'body' => $body,
-                'order_id' => $order->getOrderId(),
-            ]);
+    /**
+     * Processa múltiplas parcelas de um carnê — loop de 1 a N meses.
+     *
+     * @return PaymentResult[]
+     */
+    public function processInstallments(Order $order, array $config): array
+    {
+        $apiKey = $config['api_key'] ?? null;
+        $token = $config['token'] ?? null;
 
-            if ($statusCode !== 201 && $statusCode !== 200) {
-                $errorMsg = $body['message'] ?? $body['create_request']['response_message'] ?? 'Erro desconhecido ao criar cobrança';
-
-                return PaymentResult::failure($order, $errorMsg, $body);
-            }
-
-            $createRequest = $body['create_request'] ?? [];
-
-            if (($createRequest['result'] ?? '') !== 'reject') {
-                return PaymentResult::success(
-                    order: $order,
-                    gatewayTransactionId: $createRequest['transaction_id'] ?? '',
-                    gatewayStatus: $this->mapStatus($createRequest['status'] ?? 'pending'),
-                    bankSlipUrl: $createRequest['bank_slip']['url_slipping'] ?? null,
-                    bankSlipBarcode: $createRequest['bank_slip']['digitable_line'] ?? null,
-                    rawResponse: $body,
-                );
-            }
-
-            return PaymentResult::failure(
-                $order,
-                $createRequest['response_message'] ?? 'Transação rejeitada pela PagHiper',
-                $body,
-            );
-        } catch (\Throwable $e) {
-            $this->logger->error('Erro ao processar cobrança PagHiper', [
-                'exception' => $e->getMessage(),
-                'order_id' => $order->getOrderId(),
-            ]);
-
-            return PaymentResult::failure($order, 'Falha na comunicação com PagHiper: ' . $e->getMessage());
+        if (empty($apiKey) || empty($token)) {
+            return [PaymentResult::failure($order, 'Credenciais PagHiper não configuradas: api_key e token são obrigatórios.')];
         }
+
+        $totalInstallments = $order->getInstallments();
+        $results = [];
+
+        for ($parcela = 1; $parcela <= $totalInstallments; $parcela++) {
+            // Vencimento: adiciona N meses à data atual
+            $dueDate = (new \DateTime("+{$parcela} months"))->format('Y-m-d');
+
+            $payload = $this->buildPayload($order, $config, $parcela, $totalInstallments, $dueDate);
+
+            $result = $this->sendTransactionRequest($order, $payload);
+            $results[] = $result;
+
+            if (!$result->isSuccess()) {
+                $this->logger->error('Carnê PagHiper — falha ao gerar parcela', [
+                    'parcela' => $parcela,
+                    'total' => $totalInstallments,
+                    'error' => $result->getErrorMessage(),
+                ]);
+                break;
+            }
+        }
+
+        return $results;
     }
 
     public function handleWebhook(Request $request, array $config): Response
@@ -153,7 +148,6 @@ class PagHiperBoletoGateway extends AbstractPaymentGateway
 
         if (!$payload) {
             $this->logger->warning('Webhook PagHiper recebido sem payload válido');
-
             return new Response('Payload inválido', 400);
         }
 
@@ -166,7 +160,6 @@ class PagHiperBoletoGateway extends AbstractPaymentGateway
             return new Response('transaction_id e notification_id obrigatórios', 400);
         }
 
-        // Valida o status consultando a API da PagHiper com o notification_id
         try {
             $token = $config['token'] ?? '';
             $apiKey = $config['api_key'] ?? '';
@@ -185,22 +178,23 @@ class PagHiperBoletoGateway extends AbstractPaymentGateway
                 'timeout' => 30,
             ]);
 
-            $this->logger->info('Webhook PagHiper — status consultado com sucesso', [
+            $this->logger->info('Webhook PagHiper — status consultado', [
                 'transaction_id' => $transactionId,
             ]);
         } catch (\Throwable $e) {
             $this->logger->error('Erro ao validar webhook PagHiper', [
                 'exception' => $e->getMessage(),
             ]);
+            return new Response('Erro ao validar webhook', 500);
         }
 
-        return new Response('Webhook recebido', 200);
+        return new Response('OK', 200);
     }
 
     public function verifyStatus(Order $order, array $config): string
     {
-        $apiKey = $config['api_key'] ?? '';
         $token = $config['token'] ?? '';
+        $apiKey = $config['api_key'] ?? '';
 
         try {
             $response = $this->httpClient->request('POST', self::BASE_URL . self::CONSULT_ENDPOINT, [
@@ -230,37 +224,95 @@ class PagHiperBoletoGateway extends AbstractPaymentGateway
                 'exception' => $e->getMessage(),
                 'order_id' => $order->getOrderId(),
             ]);
-
             return 'ERROR';
         }
     }
+    // ---------------------------------------------------------------------------
+    // Métodos privados
+    // ---------------------------------------------------------------------------
 
-    /**
-     * Monta o payload para criação de transação de boleto na PagHiper.
-     */
-    private function buildCreateTransactionPayload(Order $order, array $config): array
+    private function sendTransactionRequest(Order $order, array $payload): PaymentResult
+    {
+        try {
+            $response = $this->httpClient->request('POST', self::BASE_URL . self::TRANSACTION_ENDPOINT, [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ],
+                'json' => $payload,
+                'timeout' => 30,
+            ]);
+
+            $statusCode = $response->getStatusCode();
+            $body = $response->toArray(false);
+
+            $this->logger->info('PagHiper transaction create response', [
+                'status_code' => $statusCode,
+                'order_id' => $payload['order_id'] ?? null,
+            ]);
+
+            if ($statusCode !== 201 && $statusCode !== 200) {
+                $errorMsg = $body['message'] ?? $body['create_request']['response_message'] ?? 'Erro desconhecido ao criar cobrança';
+                return PaymentResult::failure($order, $errorMsg, $body);
+            }
+
+            $createRequest = $body['create_request'] ?? [];
+
+            if (($createRequest['result'] ?? '') !== 'reject') {
+                return PaymentResult::success(
+                    order: $order,
+                    gatewayTransactionId: $createRequest['transaction_id'] ?? '',
+                    gatewayStatus: $this->mapStatus($createRequest['status'] ?? 'pending'),
+                    bankSlipUrl: $createRequest['bank_slip']['url_slip']
+                        ?? $createRequest['bank_slip']['url_slipping'] ?? null,
+                    bankSlipBarcode: $createRequest['bank_slip']['digitable_line'] ?? null,
+                    rawResponse: $body,
+                );
+            }
+
+            return PaymentResult::failure(
+                $order,
+                $createRequest['response_message'] ?? 'Transação rejeitada pela PagHiper',
+                $body,
+            );
+        } catch (\Throwable $e) {
+            $this->logger->error('Erro ao processar cobrança PagHiper', [
+                'exception' => $e->getMessage(),
+                'order_id' => $payload['order_id'] ?? null,
+            ]);
+            return PaymentResult::failure($order, 'Falha na comunicação com PagHiper: ' . $e->getMessage());
+        }
+    }
+
+
+    private function buildPayload(Order $order, array $config, int $installmentNumber, int $totalInstallments, string $dueDate): array
     {
         $apiKey = $config['api_key'] ?? '';
         $token = $config['token'] ?? '';
-        $daysDueDate = (int) ($config['days_due_date'] ?? 3);
-        $dueDate = (new \DateTime("+{$daysDueDate} days"))->format('Y-m-d');
+        $client = $order->getClient();
 
-        $user = $order->getUser();
+        $orderIdParcela = $order->getOrderId() . '-' . str_pad((string) $installmentNumber, 2, '0', STR_PAD_LEFT) . '/' . $totalInstallments;
+
+        $totalAmount = (float) $order->getAmount();
+        $parcelaAmount = round($totalAmount / $totalInstallments, 2);
+        $amountInCents = (int) round($parcelaAmount * 100);
 
         $payload = [
             'apiKey' => $apiKey,
-            'order_id' => (string) $order->getOrderId(),
-            'payer_email' => $user->getEmail() ?? '',
-            'payer_name' => $user->getName() ?? '',
-            'payer_cpf_cnpj' => $config['payer_cpf_cnpj'] ?? '',
-            'payer_phone' => $config['payer_phone'] ?? '',
+            'token' => $token,
+            'order_id' => $orderIdParcela,
+            'payer_email' => $client->getEmail() ?? '',
+            'payer_name' => $client->getName() ?? '',
+            'payer_cpf_cnpj' => $client->getCpf() ?? '',
+            'payer_phone' => $client->getPhone() ?? '',
             'notification_url' => $config['notification_url'] ?? '',
             'discount_cents' => '',
             'shipping_price_cents' => '',
             'shipping_methods' => '',
             'fixed_description' => true,
             'type_bank_slip' => 'boletoA4',
-            'days_due_date' => $daysDueDate,
+            'days_due_date' => 0,
+            'due_date' => $dueDate,
             'late_payment_fine' => '',
             'per_day_interest' => $config['per_day_interest'] ?? '',
             'early_payment_discounts_days' => $config['early_payment_discounts_days'] ?? '',
@@ -268,28 +320,22 @@ class PagHiperBoletoGateway extends AbstractPaymentGateway
             'open_after_day_due' => (int) ($config['open_after_day_due'] ?? 1),
         ];
 
-        // Converte o valor para centavos (PagHiper trabalha com centavos)
-        $amountInCents = (int) round((float) $order->getAmount() * 100);
+        $descricao = $totalInstallments > 1
+            ? "Mensalidade Carnê - Parcela {$installmentNumber}/{$totalInstallments}"
+            : 'Cobrança #' . $order->getOrderId();
 
-        $items = [
+        $payload['items'] = [
             [
-                'item_id' => (string) $order->getOrderId(),
-                'description' => 'Cobrança #' . $order->getOrderId(),
+                'item_id' => (string) $installmentNumber,
+                'description' => $descricao,
                 'price_cents' => $amountInCents,
                 'quantity' => 1,
             ],
         ];
 
-        $payload['items'] = $items;
-        $payload['due_date'] = $dueDate;
-        $payload['token'] = $token;
-
         return $payload;
     }
 
-    /**
-     * Mapeia o status retornado pela PagHiper para o status padronizado do sistema.
-     */
     private function mapStatus(string $paghiperStatus): string
     {
         return match (mb_strtolower($paghiperStatus)) {
